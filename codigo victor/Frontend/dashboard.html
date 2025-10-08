@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard – Colegios Arzobispado SSMA</title>
+
+
+  <link rel="icon" href="Imagenes/logo-chico.png">
+  <link rel="stylesheet" href="css/styles_dashboard.css">
+  <link rel="stylesheet" href="./css/styles_formulario.css"><!-- estilos del formulario -->
+
+  <style>
+    .plan--item::-webkit-details-marker { display: none; }
+    .nav__details[open] > .plan--item::after { content: '▾'; }
+    .nav__list { margin: 0 0 0 1.5rem; padding: 0; list-style: none; }
+  </style>
+</head>
+<body>
+  
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true"></div>
+      <div class="brand__text">
+        <div class="brand__title">COLEGIO ARZOBISPADO</div>
+        <div class="brand__subtitle">SSMA. CONCEPCIÓN</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav__section"></div>
+
+  
+    <nav class="nav"> 
+      <div class="nav__section"></div>
+      <a id="nav-dashboard" class="nav__item icon--dashboard" href="#/dashboard">Dashboard</a>
+
+      <details class="nav__details" open>
+        <summary class="nav__item plan--item" style="justify-content: space-between;">
+          Plan Estratégico
+        </summary>
+        <ul class="nav__list">
+          <li><a class="nav__item" id="link-liderazgo"            href="#/planes/liderazgo">Liderazgo</a></li>
+          <li><a class="nav__item" id="link-gestion"              href="#/planes/gestion">Gestión Pedagógica</a></li>
+          <li><a class="nav__item" id="link-convivencia"          href="#/planes/convivencia">Convivencia Escolar</a></li>
+          <li><a class="nav__item" id="link-recursos"             href="#/planes/recursos">Gestión de Recursos</a></li>
+        </ul>
+      </details>
+
+
+      <a id="nav-plan-form" class="nav__item" href="#/planes/form">Formulario Planes Estratégicos</a>
+      <a id="nav-reportes" class="nav__item" href="#/reportes">Reportes</a>
+    </nav>
+    <div class="nav__section">
+      <a href="login.html" class="nav__item close--sesion">Cerrar Sesión</a>
+    </div>
+  </aside>
+
+
+  <aside class="container">
+    <div class="container__top">
+      <div class="container__img">
+        <img src="Imagenes/Logo_Arzobispo.png" alt="Logo_Arzobispo">
+        <div class="text-content">
+          <h2 class="container__title">COLEGIO ARZOBISPADO</h2>
+          <h2 class="container__subtitle">SSMA. CONCEPCIÓN</h2>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <main class="main">
+      <header class="header">
+        <h1 id="pageTitle">Panel de Gestión</h1>
+        <main id="viewContainer"></main>
+      </header>
+    <section id="view"></section>
+  </main>
+
+
+  <script type="module" src="js/app_dashboard.js"></script>
+</body>
+</html>
