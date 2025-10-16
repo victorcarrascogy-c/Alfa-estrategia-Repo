@@ -1,0 +1,90 @@
+* {
+  /* Selector universal */
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', 'Avenir', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body img {
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0.8;
+}
+
+body {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ccc;
+}
+
+form {
+  z-index: 10;
+  width: 300px;
+  height: 450px;
+  display: flex;
+  justify-self: center;
+  align-items: center;
+  flex-direction: column;
+  position: absolute;
+  border-radius: 20px;
+  background-color: #F6F6F6;
+  box-shadow: 0 0 30px #444e;
+}
+
+form img {
+  width: 300px;
+  height: 190px;
+  padding: 0px 0px 30px 0px;
+  margin: 0 -10px 20px -20px;
+  align-items: center;
+  position: relative;
+}
+
+form h2 {
+  line-height: 2;
+  padding: 0px;
+  font-weight: 500;
+  margin-top: -55px
+}
+
+form input[type="text"],
+[type="password"] {
+  outline: 0;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background: #DADADA;
+  width: 80%;
+  padding: 10px;
+}
+
+form label {
+  font-weight: 500;
+  padding: 10px;
+  position: relative;
+}
+
+form button {
+  outline: 0;
+  border: 0;
+  background-color: #1E51A0;
+  border-radius: 15px;
+  cursor: pointer;
+  width: 80%;
+  height: 35px;
+  position: absolute;
+  bottom: 28px;
+  transition: all .3s ease-in-out;
+  text-align: center;
+  color: #F6F6F6;
+  font-weight: 500;
+  font-size: 20px;
+}
+
+form button:hover {
+  opacity: .70;
+}
