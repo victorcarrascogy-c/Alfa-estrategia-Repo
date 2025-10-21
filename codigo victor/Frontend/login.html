@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <!-- Make the layout responsive on phones and desktops -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plataforma Colegio Arzobispado</title>
+
+    <!-- Global login page stylesheet (background, form layout, colors) -->
+    <link rel="stylesheet" href="./css/styles.css" />
+    <!-- Small icon shown in the browser tab -->
+    <link rel="icon" href="./Imagenes/logo-chico.png" />
+</head>
+
+<body>
+    <!-- Full-bleed background image under the form.
+       The CSS should position the form above this image. -->
+    <img src="./Imagenes/pantalla_completa_1980x1080px/PANTALLA COMPLETA_-04.png" alt="plantilla" />
+
+    <!-- Login form the JS binds to (see ./js/Login.js).
+       Uses native HTML validation for required fields. -->
+    <form>
+        <!-- Brand mark inside the form for quick recognition -->
+        <img src="https://colegiosarzobispado.cl/wp-content/uploads/2025/07/logo-texto.png"
+            alt="Logo Colegio Arzobispado" title="Logo Colegio Arzobispado" />
+
+        <!-- Form title -->
+        <h2>Iniciar Sesion</h2>
+
+        <!-- Username field (RUT). The script trims and validates it before POST. -->
+        <label for="rut">rut</label>
+        <input type="text" id="rut" placeholder="Sin puntos ni guión" required />
+
+        <!-- Password field. The script submits it to the auth endpoint. -->
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="" required />
+
+        <!-- Inline status area updated by JS (success, errors, progress).
+         aria-live ensures screen readers announce changes automatically. -->
+        <p id="loginMsg" class="msg" role="alert" aria-live="polite"></p>
+
+        <!-- Primary action. JS disables it while the request is in flight. -->
+        <button type="submit" id="submit">Ingresar</button>
+    </form>
+
+    <!-- Page controller: handles submit, calls /auth/login, stores JWT, redirects. -->
+    <script src="./js/Login.js"></script>
+</body>
+
+</html>
