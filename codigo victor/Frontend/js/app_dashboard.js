@@ -1,23 +1,19 @@
 // --- SPA hash navigation helper --------------------------------------------
 /**
- * Navigate to a given hash. If the hash is already the same,
- * force the router to run. Also guards against browsers
- * that might drop the hashchange event.
+ * Navega a un hash dado. Si ya es el mismo, fuerza el router.
+ * Protege contra navegadores que podrían no disparar hashchange.
  */
 function navigateHash(newHash) {
   if (location.hash === newHash) {
     router();
   } else {
     location.hash = newHash;
-    setTimeout(() => {
-      if (location.hash === newHash) router();
-    }, 0);
   }
 }
 
 /**
- * Persist current "metas" context and navigate to the indicators view
- * for the given goal id. Exposed globally for inline onclick usage.
+ * Persistir el contexto de "metas" y navegar a la vista de indicadores
+ * para el goal indicado. Se expone globalmente para uso inline.
  */
 function navigateToIndicators(goalId) {
   const ctx = window.__metasCtx || JSON.parse(sessionStorage.getItem('metasCtx') || 'null');
@@ -47,12 +43,12 @@ const data = {
 
 
 // --- Small UI utilities used by the dashboard -------------------------------
-/** Format CLP currency without decimals. */
+/** Formatea CLP sin decimales. */
 function formatoMoneda(n) {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
 }
 
-/** Map a status string to a visual "chip" class. */
+/** Mapea estado a clase visual de "chip". */
 function claseChip(estado) {
   const e = estado.toLowerCase();
   if (e.includes('complet')) return 'chip chip--ok';
@@ -61,10 +57,7 @@ function claseChip(estado) {
   return 'chip chip--danger';
 }
 
-/**
- * Animate the circular progress ring up to a target percentage.
- * Uses requestAnimationFrame for smooth UI.
- */
+/** Anima el anillo de progreso hasta el % objetivo. */
 function pintarAvance(valor) {
   const ring = document.querySelector('.ring');
   const txt = document.getElementById('progressValue');
@@ -81,7 +74,7 @@ function pintarAvance(valor) {
   requestAnimationFrame(step);
 }
 
-/** Fill the dashboard stat tiles with numbers. */
+/** Pinta los azulejos de stats. */
 function pintarStats(s) {
   const ids = ['statIndicadores', 'statMetas', 'statActividades', 'statRecursos'];
   if (!ids.every(id => document.getElementById(id))) return;
@@ -91,7 +84,7 @@ function pintarStats(s) {
   document.getElementById('statRecursos').textContent = formatoMoneda(s.recursos);
 }
 
-/** Render the management report list with labeled chips. */
+/** Renderiza la lista de reporte con chips. */
 function pintarReporte(items) {
   const ul = document.getElementById('reportList');
   if (!ul) return;
@@ -109,7 +102,7 @@ function pintarReporte(items) {
   });
 }
 
-/** Render horizontal bars for resource distribution. */
+/** Renderiza barras horizontales de recursos. */
 function pintarBarras(items) {
   const cont = document.getElementById('resourcesBars');
   if (!cont) return;
@@ -141,7 +134,7 @@ function pintarBarras(items) {
 
 
 // --- Role helpers (from JWT / localStorage) ---------------------------------
-/** Decode the JWT payload stored as "token" in localStorage. */
+/** Decodifica el payload del JWT guardado como "token". */
 function getTokenPayload() {
   const t = localStorage.getItem('token');
   if (!t) return null;
@@ -155,10 +148,7 @@ function getTokenPayload() {
   }
 }
 
-/**
- * Resolve the user's role from token payload or fallbacks.
- * Returns 'editor', 'viewer', or null.
- */
+/** Devuelve 'editor', 'viewer' o null segun token/fallbacks. */
 function getRole() {
   const p = getTokenPayload() || {};
   return p.role || (Array.isArray(p.roles) && p.roles[0]) ||
@@ -166,7 +156,7 @@ function getRole() {
     localStorage.getItem('role') || null;
 }
 
-/** Convenience boolean: is the current user an editor? */
+/** Atajo: ¿es editor el usuario actual? */
 function isEditor() { return getRole() === 'editor'; }
 
 
@@ -175,23 +165,20 @@ const API = "http://127.0.0.1:8000";
 const $view = document.getElementById('view');
 const $title = document.getElementById('pageTitle');
 
-/** Build Authorization header if a token exists. */
+/** Cabecera Authorization si existe token. */
 function authHeaders() {
   const t = localStorage.getItem("token");
   return t ? { Authorization: "Bearer " + t } : {};
 }
 
-/** Fetch an HTML fragment without cache and return raw text. */
+/** Carga un fragmento HTML sin cache y devuelve texto. */
 async function loadHTML(url) {
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('No se pudo cargar ' + url);
   return res.text();
 }
 
-/**
- * Dynamically load a script only once (idempotent).
- * Uses a data attribute to avoid duplicates.
- */
+/** Carga un script una sola vez (idempotente). */
 function loadScriptOnce(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[data-dyn="${src}"]`)) return resolve();
@@ -205,17 +192,17 @@ function loadScriptOnce(src) {
   });
 }
 
-/** Highlight a sidebar link based on current hash. */
+/** Resalta en sidebar el link activo según hash. */
 function setActiveByHash(hash) {
   document.querySelectorAll('.nav__item').forEach(a => a.classList.remove('is-active'));
   const active = document.querySelector(`a[href="${hash}"]`);
   if (active) active.classList.add('is-active');
 }
 
-/** HTML-escape helper to prevent layout issues or XSS. */
+/** Escape HTML básico. */
 const esc = (s = '') => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
-/** Format ISO dates as dd/mm/yyyy in Chilean locale (UTC). */
+/** Formatea ISO como dd/mm/yyyy en es-CL (UTC). */
 function fechaCL(iso = '') {
   if (!iso) return '';
   const d = new Date(iso);
@@ -223,7 +210,7 @@ function fechaCL(iso = '') {
   return d.toLocaleDateString('es-CL', { timeZone: 'UTC' });
 }
 
-/** Human-readable titles for plan dimensions. */
+/** Título legible para dimensión. */
 function tituloDimension(dim) {
   switch (dim) {
     case 'LIDERAZGO': return 'Liderazgo';
@@ -235,15 +222,43 @@ function tituloDimension(dim) {
 }
 
 
+// --- ObjectiveId cache por (dimension::name) --------------------------------
+const OBJMAP_KEY = 'objectiveIdByDimAndName';
+function getObjectiveMap() {
+  return JSON.parse(sessionStorage.getItem(OBJMAP_KEY) || '{}');
+}
+function setObjectiveMap(map) {
+  sessionStorage.setItem(OBJMAP_KEY, JSON.stringify(map));
+}
+function cacheObjectiveId(dimension, name, id) {
+  const map = getObjectiveMap();
+  map[`${dimension}::${name}`] = id;
+  setObjectiveMap(map);
+}
+function getCachedObjectiveId(dimension, name) {
+  const map = getObjectiveMap();
+  return map[`${dimension}::${name}`] || null;
+}
+
+
 // --- API layer: objectives / goals / indicators -----------------------------
-/** GET /objectives with a high limit. */
+/** GET /objectives con límite alto. */
 async function apiListObjectives() {
   const res = await fetch(`${API}/objectives?limit=500`, { headers: { ...authHeaders() } });
   if (!res.ok) throw new Error('No se pudo listar objectives');
   return res.json();
 }
 
-/** POST /objectives to create a new objective. */
+/** GET /objectives filtrado por dimensión. */
+async function apiListObjectivesByDim(dimension) {
+  const res = await fetch(`${API}/objectives?dimension=${encodeURIComponent(dimension)}`, {
+    headers: { ...authHeaders() }
+  });
+  if (!res.ok) throw new Error('No se pudo listar objectives');
+  return res.json();
+}
+
+/** POST /objectives crea nuevo objetivo. */
 async function apiCreateObjective(obj) {
   const res = await fetch(`${API}/objectives`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -254,34 +269,47 @@ async function apiCreateObjective(obj) {
 }
 
 /**
- * Ensure an objective exists by name. If it doesn't exist,
- * create it with a 4-year range starting from current year.
+ * Asegura existencia de un Objective por (dimension, name).
+ * Si no existe, lo crea con rango de 4 años desde el año actual.
+ * Emplea caché en sessionStorage para evitar llamadas repetidas.
  */
-async function ensureObjectiveByName(name, accionesOptional) {
-  const objs = await apiListObjectives();
-  const hit = objs.find(o => (o.name || '').trim().toLowerCase() === name.trim().toLowerCase());
-  if (hit) return hit;
+async function ensureObjectiveByName(dimension, name) {
+  // caché rápida
+  const cached = getCachedObjectiveId(dimension, name);
+  if (cached) return { id: cached, name, dimension };
 
-  const now = new Date();
-  const start = now.getUTCFullYear();
-  const end = start + 3;
-
-  return await apiCreateObjective({
-    name,
-    description: '',
-    start_year: start,
-    end_year: end
+  // buscar por filtros del backend
+  const res = await fetch(`${API}/objectives?dimension=${encodeURIComponent(dimension)}&name=${encodeURIComponent(name)}`, {
+    headers: { ...authHeaders() }
   });
+  const list = res.ok ? await res.json() : [];
+  if (list && list.length) {
+    cacheObjectiveId(dimension, name, list[0].id);
+    return list[0];
+  }
+
+  // crear idempotente
+  const now = new Date();
+  const payload = {
+    name,
+    dimension,
+    description: '',
+    start_year: now.getUTCFullYear(),
+    end_year: now.getUTCFullYear() + 3
+  };
+  const created = await apiCreateObjective(payload);
+  cacheObjectiveId(dimension, name, created.id);
+  return created;
 }
 
-/** GET /objectives/:id/goals listing. */
+/** GET /objectives/:id/goals */
 async function apiListGoalsByObjective(objectiveId) {
   const res = await fetch(`${API}/objectives/${objectiveId}/goals?limit=500`, { headers: { ...authHeaders() } });
   if (!res.ok) throw new Error('No se pudo listar goals');
   return res.json();
 }
 
-/** POST /objectives/:id/goals to create a goal. */
+/** POST /objectives/:id/goals */
 async function apiCreateGoal(objectiveId, payload) {
   const res = await fetch(`${API}/objectives/${objectiveId}/goals`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -291,17 +319,14 @@ async function apiCreateGoal(objectiveId, payload) {
   return res.json();
 }
 
-/** GET /goals/:id/indicators listing. */
+/** GET /goals/:id/indicators */
 async function apiListIndicatorsByGoal(goalId) {
   const res = await fetch(`${API}/goals/${goalId}/indicators?limit=500`, { headers: { ...authHeaders() } });
   if (!res.ok) throw new Error('No se pudo listar indicators');
   return res.json();
 }
 
-/**
- * POST /goals/:id/indicators to create an indicator.
- * Removes empty/null fields and always sends "target" as string.
- */
+/** POST /goals/:id/indicators (limpia payload) */
 async function apiCreateIndicator(goalId, payload) {
   const clean = {};
   if (payload.title && payload.title.trim()) clean.title = payload.title.trim();
@@ -325,7 +350,6 @@ async function apiCreateIndicator(goalId, payload) {
 
 
 // --- 403 view ---------------------------------------------------------------
-/** Render a simple forbidden screen with a back-to-dashboard button. */
 function showForbidden(msg = 'No tienes permisos para acceder a esta sección.') {
   $title.textContent = 'Acceso restringido';
   $view.innerHTML = `
@@ -344,15 +368,11 @@ function showForbidden(msg = 'No tienes permisos para acceder a esta sección.')
 // --- Plans cache and grouping by dimension ----------------------------------
 /**
  * plansCache: Map<dimension, { list:Array, groups:Map<objectiveName, ArrayPlans> }>
- * invalidatePlansCache: clear cache globally or per dimension.
  */
 const plansCache = new Map();
 window.invalidatePlansCache = (dim) => dim ? plansCache.delete(dim) : plansCache.clear();
 
-/**
- * Fetch plans by dimension, group them by "objetivo_estrategico",
- * and memoize the result. Handles 401/403 conveniently.
- */
+/** Agrupa planes por objetivo dentro de una dimensión (con memoización). */
 async function getPlansByDimension(dimensionValue) {
   if (plansCache.has(dimensionValue)) return plansCache.get(dimensionValue);
   const res = await fetch(`${API}/plans?dimension=${encodeURIComponent(dimensionValue)}`, {
@@ -375,7 +395,6 @@ async function getPlansByDimension(dimensionValue) {
 
 
 // --- Views: Dashboard --------------------------------------------------------
-/** Render the main dashboard tiles and charts. */
 async function showDashboard() {
   $title.textContent = 'Panel de Gestión';
   $view.innerHTML = `
@@ -412,10 +431,7 @@ async function showDashboard() {
   pintarBarras(data.recursos);
 }
 
-/**
- * Render and initialize the strategic plans form.
- * Only editors can open this view.
- */
+/** Form de planes (solo editores). */
 async function showPlanForm() {
   if (!isEditor()) { showForbidden('Solo los editores pueden crear/editar planes.'); return; }
   $title.textContent = 'Formulario de Planes Estratégicos';
@@ -425,17 +441,11 @@ async function showPlanForm() {
   if (window.initPlanForm) window.initPlanForm();
 }
 
-// Placeholder state for potential filters (not used yet).
+// Filtros placeholder
 const currentFilters = { sort: 'objetivo-asc', colegio: 'TODOS', subdimension: 'TODOS' };
 
 
-// --- Views: Objectives list by dimension ------------------------------------
-/**
- * Show objectives grouped under a dimension with actions:
- * - open objective detail
- * - open resources
- * - open evidence (local)
- */
+// --- Views: lista de objetivos por dimensión --------------------------------
 async function showPlanList(dimensionValue) {
   $title.textContent = `Plan Estratégico — ${tituloDimension(dimensionValue)}`;
   $view.innerHTML = `
@@ -490,11 +500,7 @@ async function showPlanList(dimensionValue) {
 }
 
 
-// --- Views: Objective detail -------------------------------------------------
-/**
- * Show the selected objective's actions in a table.
- * Provides entry points to "Metas Estratégicas" and back.
- */
+// --- Views: detalle de objetivo ---------------------------------------------
 async function showObjectiveDetail(dimensionValue, objetivo) {
   const { groups } = await getPlansByDimension(dimensionValue);
   const items = (groups.get(objetivo) || []).slice()
@@ -528,6 +534,7 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
                 <th>Término</th>
                 <th>Programa</th>
                 <th>Responsable</th>
+                <th>Evidencias</th>
               </tr>
             </thead>
             <tbody>
@@ -542,6 +549,7 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
                   <td>${fechaCL(r.fecha_termino)}</td>
                   <td>${esc(r.programa_asociado)}</td>
                   <td>${esc(r.responsable)}</td>
+                  <td><button class="btn btn--sm ev-open" data-objname="${esc(objetivo)}">Evidencias <span class="chip ev-count">0</span></button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -562,14 +570,96 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
     $filterArea.style.display = isVisible ? 'none' : 'flex';
     $filterBtn.textContent = isVisible ? 'Filtrar / Ordenar' : 'Ocultar Filtros';
   });
+
+  // Resolver objectiveId por (dimension, nombre) con caché
+  let objectiveId = getCachedObjectiveId(dimensionValue, objetivo);
+  if (!objectiveId) {
+    try {
+      const obj = await ensureObjectiveByName(dimensionValue, objetivo);
+      objectiveId = obj?.id || null;
+    } catch (e) { console.error(e); }
+  }
+
+  async function apiCountEvidencesByObjective(oid) {
+    try {
+      const res = await fetch(`${API}/objectives/${oid}/evidences/count`, { headers: { ...authHeaders() } });
+      return res.ok ? await res.json() : { count: 0 };
+    } catch { return { count: 0 }; }
+  }
+  async function apiListEvidencesByObjective(oid) {
+    const res = await fetch(`${API}/objectives/${oid}/evidences`, { headers: { ...authHeaders() } });
+    if (!res.ok) throw new Error('No se pudo listar evidencias');
+    return res.json();
+  }
+
+  // Actualizar badges
+  if (objectiveId) {
+    try {
+      const { count } = await apiCountEvidencesByObjective(objectiveId);
+      $view.querySelectorAll('.ev-count').forEach(el => el.textContent = count ?? 0);
+    } catch { }
+  } else {
+    $view.querySelectorAll('.ev-open').forEach(btn => { btn.disabled = true; btn.title = 'Objetivo no reconocido'; });
+  }
+
+  // Modal de evidencias (si no existe, crearlo)
+  let modal = document.getElementById('ev-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ev-modal';
+    modal.style.cssText = 'position:fixed;inset:0;display:none;background:rgba(0,0,0,.4);z-index:9999;';
+    modal.innerHTML = `
+      <div style="max-width:860px;margin:6vh auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee">
+          <h3 style="margin:0">Evidencias del objetivo</h3>
+          <button id="ev-close" class="btn btn--ghost" title="Cerrar">✕</button>
+        </div>
+        <div id="ev-body" style="padding:12px 16px;max-height:70vh;overflow:auto"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#ev-close').onclick = () => (modal.style.display = 'none');
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  }
+
+  // Abrir modal y listar evidencias
+  $view.querySelectorAll('.ev-open').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!objectiveId) return;
+      const body = document.getElementById('ev-body');
+      body.innerHTML = 'Cargando…';
+      modal.style.display = 'block';
+      try {
+        const evs = await apiListEvidencesByObjective(objectiveId);
+        if (!evs.length) {
+          body.innerHTML = '<div class="card">Sin evidencias aún.</div>';
+          return;
+        }
+        const rows = evs.map(ev => `
+          <tr>
+            <td>${esc(ev.original_filename || ev.filename)}</td>
+            <td>${esc(ev.indicator_title || '')}</td>
+            <td>${new Date(ev.uploaded_at).toLocaleString('es-CL')}</td>
+            <td><a class="btn btn--sm" href="${API}${ev.download_url}">Descargar</a></td>
+          </tr>`).join('');
+        body.innerHTML = `
+          <div class="table-wrap">
+            <table class="plan-table">
+              <thead><tr><th>Archivo</th><th>Indicador</th><th>Fecha</th><th></th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      } catch (e) {
+        console.error(e);
+        body.innerHTML = '<div class="card">No se pudo cargar evidencias.</div>';
+      }
+    });
+  });
 }
 
 
-// --- Local evidence storage (IndexedDB + optional FS Access) ----------------
+// --- Local evidence storage (IndexedDB) — utilidades (se preservan) ---------
 const DB_NAME = 'evidenciasDB';
 const DB_STORE = 'files';
-
-/** Open (and initialize if needed) the evidence IndexedDB database. */
 function idbOpen() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -584,8 +674,6 @@ function idbOpen() {
     req.onerror = () => reject(req.error);
   });
 }
-
-/** Add a file record into IndexedDB. */
 async function idbAdd(fileRec) {
   const db = await idbOpen();
   return new Promise((resolve, reject) => {
@@ -595,8 +683,6 @@ async function idbAdd(fileRec) {
     tx.onerror = () => reject(tx.error);
   });
 }
-
-/** List all evidences for an objective from IndexedDB. */
 async function idbListByObjetivo(objetivo) {
   const db = await idbOpen();
   return new Promise((resolve, reject) => {
@@ -607,8 +693,6 @@ async function idbListByObjetivo(objetivo) {
     req.onerror = () => reject(req.error);
   });
 }
-
-/** Delete a file record by id in IndexedDB. */
 async function idbDelete(id) {
   const db = await idbOpen();
   return new Promise((resolve, reject) => {
@@ -619,77 +703,46 @@ async function idbDelete(id) {
   });
 }
 
-// Optional File System Access integration
-let evidencesDirHandle = null;
-/** Ask the user to pick a local directory for saving evidences. */
-async function chooseLocalFolder() {
-  if (!window.showDirectoryPicker) {
-    alert('Tu navegador no soporta elegir carpeta. Se usará almacenamiento interno (IndexedDB).');
-    return null;
-  }
-  evidencesDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-  const perm = await evidencesDirHandle.requestPermission({ mode: 'readwrite' });
-  if (perm !== 'granted') evidencesDirHandle = null;
-  return evidencesDirHandle;
-}
 
-/** Save a file into the chosen local directory (if available). */
-async function saveToFolder(file) {
-  if (!evidencesDirHandle) return false;
-  const safeName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
-  const fh = await evidencesDirHandle.getFileHandle(safeName, { create: true });
-  const writable = await fh.createWritable();
-  await writable.write(file);
-  await writable.close();
-  return true;
-}
-
-const ACCEPT_EXT = [
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.png', '.jpg', '.jpeg'
-].join(',');
-
-/** Return a minimal icon label based on file type or name. */
-function fileIcon(type, name) {
-  const n = (name || '').toLowerCase();
-  if (n.endsWith('.pdf')) return '📄 PDF';
-  if (n.endsWith('.doc') || n.endsWith('.docx')) return '📝 DOC';
-  if (n.endsWith('.xls') || n.endsWith('.xlsx')) return '📊 XLS';
-  if (n.endsWith('.ppt') || n.endsWith('.pptx')) return '📈 PPT';
-  if (type?.startsWith('image/')) return '🖼️ IMG';
-  return '📁 FILE';
-}
-
-/** Pretty-print a byte size. */
-function fmtSize(bytes) {
-  if (!Number.isFinite(bytes)) return '—';
-  const u = ['B', 'KB', 'MB', 'GB'];
-  let i = 0, n = bytes;
-  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
-  return `${n.toFixed(1)} ${u[i]}`;
-}
-
-
-/**
- * Evidence upload/list view for an objective.
- * Uses local IndexedDB; optionally also writes to a user-chosen folder.
- */
+// --- View: Evidencias (sube a backend y lista por Objetivo) -----------------
 async function showEvidenceUpload(dimensionValue, objetivo) {
+  // Garantizar Objetivo por (dimension, objetivo)
+  const objective = await ensureObjectiveByName(dimensionValue, objetivo);
+  const objectiveId = objective.id;
+
+  // Garantizar una Meta e Indicador “Evidencias”
+  const metas = await apiListGoalsByObjective(objectiveId);
+  let goalId = metas[0]?.id;
+  if (!goalId) {
+    const year = new Date().getUTCFullYear();
+    const nueva = await apiCreateGoal(objectiveId, {
+      title: 'Evidencias del objetivo',
+      description: `Repositorio de evidencias — ${year}`,
+      year
+    });
+    goalId = nueva.id;
+  }
+  const indics = await apiListIndicatorsByGoal(goalId);
+  let indicator = indics.find(x => (x.title || '').toLowerCase() === 'evidencias');
+  if (!indicator) {
+    indicator = await apiCreateIndicator(goalId, { title: 'Evidencias', unit: '', target: '' });
+  }
+  const indicatorId = indicator.id;
+
+  // UI
   $title.textContent = `${tituloDimension(dimensionValue)} — Evidencias`;
   $view.innerHTML = `
     <section class="card card--full">
       <header class="card__header" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
         <button class="btn btn--ghost" id="btnBack">← Volver</button>
         <h2 style="margin:0;">Evidencias — ${esc(objetivo)}</h2>
-        <div style="margin-left:auto;display:flex;gap:.5rem;">
-          <button class="btn btn--ghost" id="btnChooseFolder">Elegir carpeta del PC (opcional)</button>
-        </div>
       </header>
       <div class="card__body">
         <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
-          <input id="fileInput" type="file" accept="${ACCEPT_EXT}" multiple />
+          <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" multiple />
+          <input id="fileDesc" class="inp" placeholder="Descripción (opcional)" style="min-width:260px;">
           <button class="btn" id="btnUpload">Subir</button>
-          <small>Formatos permitidos: PDF, DOC(X), XLS(X), PPT(X), PNG/JPG</small>
+          <small>Se guardará en el servidor y quedará visible en “Ir al objetivo → Evidencias”.</small>
         </div>
         <hr/>
         <div class="table-wrap">
@@ -697,13 +750,12 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
             <thead>
               <tr>
                 <th>Archivo</th>
-                <th>Tamaño</th>
-                <th>Tipo</th>
+                <th>Indicador</th>
                 <th>Fecha</th>
-                <th>Acciones</th>
+                <th></th>
               </tr>
             </thead>
-            <tbody id="tbFiles"><tr><td colspan="5">Cargando…</td></tr></tbody>
+            <tbody id="tbFiles"><tr><td colspan="4">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -711,71 +763,51 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
   `;
 
   document.getElementById('btnBack')?.addEventListener('click', () => showPlanList(dimensionValue));
-  document.getElementById('btnChooseFolder')?.addEventListener('click', async () => {
-    await chooseLocalFolder();
-    alert(evidencesDirHandle ? 'Carpeta lista. Los archivos también se guardarán ahí.' : 'No se pudo usar carpeta; se seguirá usando almacenamiento interno.');
-  });
 
+  // Listar evidencias desde backend (por objetivo)
   async function refreshList() {
-    const rows = await idbListByObjetivo(objetivo);
+    const res = await fetch(`${API}/objectives/${objectiveId}/evidences`, { headers: { ...authHeaders() } });
+    const evs = res.ok ? await res.json() : [];
     const tb = document.getElementById('tbFiles');
-    if (!rows.length) {
-      tb.innerHTML = `<tr><td colspan="5">Aún no hay evidencias para este objetivo.</td></tr>`;
+    if (!evs.length) {
+      tb.innerHTML = `<tr><td colspan="4">Aún no hay evidencias para este objetivo.</td></tr>`;
       return;
     }
-    tb.innerHTML = rows.map(r => {
-      const when = new Date(r.createdAt || Date.now()).toLocaleString('es-CL');
-      return `
-        <tr data-id="${r.id}">
-          <td>${fileIcon(r.type, r.name)} — ${esc(r.name)}</td>
-          <td>${fmtSize(r.size)}</td>
-          <td>${esc(r.type || '—')}</td>
-          <td>${when}</td>
-          <td>
-            <button class="btn btn--sm" data-act="dl">Descargar</button>
-            <button class="btn btn--sm btn--ghost" data-act="del">Eliminar</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    tb.innerHTML = evs.map(ev => `
+      <tr>
+        <td>${esc(ev.original_filename || ev.filename)}</td>
+        <td>${esc(ev.indicator_title || '')}</td>
+        <td>${new Date(ev.uploaded_at).toLocaleString('es-CL')}</td>
+        <td><a class="btn btn--sm" href="${API}${ev.download_url}" target="_blank" rel="noopener">Descargar</a></td>
+      </tr>
+    `).join('');
   }
 
+  // Subir archivos al indicador “Evidencias”
   document.getElementById('btnUpload')?.addEventListener('click', async () => {
     const inp = document.getElementById('fileInput');
+    const desc = document.getElementById('fileDesc').value || '';
     if (!inp.files || !inp.files.length) { alert('Selecciona uno o más archivos primero.'); return; }
+
     for (const file of inp.files) {
-      try { await saveToFolder(file); } catch (_) { }
-      const blob = new Blob([await file.arrayBuffer()], { type: file.type || 'application/octet-stream' });
-      await idbAdd({ objetivo, dimension: dimensionValue, name: file.name, size: file.size, type: file.type || '', createdAt: Date.now(), blob });
-    }
-    alert('Evidencia(s) guardada(s).');
-    await refreshList();
-    document.getElementById('fileInput').value = '';
-  });
-
-  document.getElementById('tbFiles')?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const tr = btn.closest('tr[data-id]');
-    const id = Number(tr?.dataset.id);
-
-    if (btn.dataset.act === 'del') {
-      if (confirm('¿Eliminar esta evidencia local?')) {
-        await idbDelete(id);
-        await refreshList();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('description', desc);
+      const up = await fetch(`${API}/indicators/${indicatorId}/evidences`, {
+        method: 'POST',
+        headers: { ...authHeaders() },
+        body: fd
+      });
+      if (!up.ok) {
+        const t = await up.text().catch(() => '');
+        alert('No se pudo subir una evidencia:\n' + (t || up.status));
+        return;
       }
-      return;
     }
-    if (btn.dataset.act === 'dl') {
-      const rows = await idbListByObjetivo(objetivo);
-      const rec = rows.find(r => r.id === id);
-      if (!rec) return;
-      const url = URL.createObjectURL(rec.blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = rec.name || 'evidencia';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    }
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileDesc').value = '';
+    await refreshList();
+    alert('Evidencia(s) cargada(s) con éxito.');
   });
 
   await refreshList();
@@ -783,10 +815,6 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
 
 
 // --- View: Resources by objective ------------------------------------------
-/**
- * Show resources table for all plans belonging to the objective.
- * Fetches each plan's resources and flattens them into rows.
- */
 async function showObjectiveResources(dimensionValue, objetivo) {
   const { groups } = await getPlansByDimension(dimensionValue);
   const plans = (groups.get(objetivo) || []).slice()
@@ -918,21 +946,12 @@ async function showObjectiveResources(dimensionValue, objetivo) {
 
 
 // --- View: Indicators for a goal -------------------------------------------
-/**
- * Indicators UI for a single goal:
- * - load + render indicators
- * - create new indicators
- * - inline progress calculators (percent/count/free)
- * - delete indicator
- * - back to metas (using stored context)
- */
 async function showIndicatorsForGoal(goalId) {
   async function loadIndicators() {
     const list = await apiListIndicatorsByGoal(goalId).catch(() => []);
     return Array.isArray(list) ? list : [];
   }
 
-  /** Categorize unit to drive the progress UI type. */
   function classifyUnit(uRaw) {
     const u = (uRaw || '').trim().toLowerCase();
     if (u === '%' || u === 'porcentaje') return 'percent';
@@ -940,7 +959,6 @@ async function showIndicatorsForGoal(goalId) {
     return 'other';
   }
 
-  /** Render indicator rows and associated collapsible progress panels. */
   function paintTable(indics) {
     if (!indics.length) {
       $tb.innerHTML = `<tr><td colspan="5">Sin indicadores para esta meta.</td></tr>`;
@@ -1011,7 +1029,7 @@ async function showIndicatorsForGoal(goalId) {
       `;
     }).join('');
 
-    // Restore locally-saved progress inputs per indicator id.
+    // restaurar inputs guardados localmente
     indics.forEach(x => {
       const saved = JSON.parse(localStorage.getItem(`ind-prog-${x.id}`) || 'null');
       if (!saved) return;
@@ -1030,13 +1048,6 @@ async function showIndicatorsForGoal(goalId) {
     });
   }
 
-  /**
-   * Compute and render the progress result depending on the kind:
-   * - percent: shows percentage with clamp(0..100)
-   * - count:   shows fraction "obt/total"
-   * - other:   echoes a free text value
-   * Persists the input locally per indicator id.
-   */
   function computeAndRenderProgress(id, kind) {
     const $out = document.getElementById(`prog-res-${id}`);
     if (!$out) return;
@@ -1067,8 +1078,7 @@ async function showIndicatorsForGoal(goalId) {
     localStorage.setItem(`ind-prog-${id}`, JSON.stringify({ free: v || '' }));
   }
 
-
-  // --- Indicators page shell ------------------------------------------------
+  // Shell
   $title.textContent = `Indicadores — Meta ${goalId}`;
   $view.innerHTML = `
     <section class="card card--full">
@@ -1114,7 +1124,7 @@ async function showIndicatorsForGoal(goalId) {
     </section>
   `;
 
-  // Back button: return to metas using stored context, or fallback to history.
+  // Volver a metas con contexto
   document.getElementById('btnBack')?.addEventListener('click', () => {
     const ctx = window.__metasCtx || JSON.parse(sessionStorage.getItem('metasCtx') || 'null');
     if (ctx && ctx.dimension && ctx.objetivo) {
@@ -1126,11 +1136,11 @@ async function showIndicatorsForGoal(goalId) {
 
   const $tb = document.getElementById('tbIndics');
 
-  // Initial load + paint
+  // Carga inicial
   let indicators = await loadIndicators();
   paintTable(indicators);
 
-  // Create indicator handler (validates + refreshes list)
+  // Crear indicador
   document.getElementById('btnAddIndic')?.addEventListener('click', async () => {
     const nombre = document.getElementById('indNombre').value.trim();
     const unidad = document.getElementById('indUnidad').value.trim();
@@ -1138,7 +1148,8 @@ async function showIndicatorsForGoal(goalId) {
 
     if (!nombre) { alert('Ingresa el nombre del indicador.'); return; }
 
-    const u = unidad.toLowerCase();
+    // Validación básica para %
+    const u = (unidad || '').toLowerCase();
     if ((u === '%' || u === 'porcentaje') && targetStr && !/^(100(\.0+)?|[0-9]?\d(\.\d+)?)%?$/.test(targetStr)) {
       return alert('Si la unidad es %, el target debe ser 0–100 (puedes usar "80" o "80%").');
     }
@@ -1155,7 +1166,7 @@ async function showIndicatorsForGoal(goalId) {
     }
   });
 
-  // Table actions: toggle progress panel / delete indicator
+  // Acciones tabla
   $tb.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -1179,7 +1190,7 @@ async function showIndicatorsForGoal(goalId) {
     }
   });
 
-  // Live progress calculation on input changes
+  // Cálculo en vivo
   $tb.addEventListener('input', (e) => {
     const inp = e.target;
     const id = inp?.dataset?.id;
@@ -1191,8 +1202,7 @@ async function showIndicatorsForGoal(goalId) {
 }
 
 
-// --- View: simple "Reportes" placeholder ------------------------------------
-/** Static placeholder page for future reports. */
+// --- View: Reportes (placeholder) -------------------------------------------
 function showReportes() {
   $title.textContent = 'Reportes';
   $view.innerHTML = `
@@ -1207,11 +1217,7 @@ function showReportes() {
 }
 
 
-// --- UI: animated accordion in the sidebar ---------------------------------
-/**
- * Add smooth open/close animation to <details> accordion menus
- * by animating max-height.
- */
+// --- UI: acordeón lateral con transición ------------------------------------
 function setupAccordionTransition() {
   document.querySelectorAll('.nav__details').forEach(details => {
     const content = details.querySelector('.nav__submenu-content');
@@ -1251,21 +1257,14 @@ function setupAccordionTransition() {
 }
 
 
-// --- View: Strategic goals (Metas) editor -----------------------------------
-/**
- * Metas editor for an objective:
- * - ensures an Objective exists
- * - lets the user add goals (title/period/year)
- * - lists existing goals with actions:
- *    * go to Indicators (persists context)
- *    * delete goal
- */
+// --- View: Metas (editor) ---------------------------------------------------
 async function showStrategicGoalsEditor(dimensionValue, objetivo) {
+  // persistir contexto para el botón "Volver" desde indicadores
   window.__metasCtx = { dimension: dimensionValue, objetivo };
   sessionStorage.setItem('metasCtx', JSON.stringify(window.__metasCtx));
 
-  sessionStorage.setItem('metasCtx', JSON.stringify({ dimension: dimensionValue, objetivo }));
-  const objective = await ensureObjectiveByName(objetivo);
+  // garantizar Objective por (dimensión, nombre)
+  const objective = await ensureObjectiveByName(dimensionValue, objetivo);
   const objectiveId = objective.id;
 
   const startY = Number(objective.start_year) || new Date().getUTCFullYear();
@@ -1325,7 +1324,6 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
 
   const $tb = document.getElementById('tbMetas');
 
-  /** Load goals for the objective and render the table body. */
   async function refreshTable() {
     const metas = await apiListGoalsByObjective(objectiveId);
     if (!metas.length) {
@@ -1356,29 +1354,33 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
 
   await refreshTable();
 
-  /** Create a new goal for the objective, then refresh the table. */
+  // Crear meta (idempotente por combinación en backend)
+  let savingGoal = false;
   document.getElementById('btnAgregarFila')?.addEventListener('click', async () => {
-    const meta = document.getElementById('inpMeta').value.trim();
-    const periodo = document.getElementById('inpEstrategiaPeriodo').value.trim();
-    const year = Number(document.getElementById('selAnio').value);
-
-    if (!meta || !periodo) { alert('Completa Meta y Estrategia del Periodo.'); return; }
+    if (savingGoal) return;
+    savingGoal = true;
+    const btn = document.getElementById('btnAgregarFila');
+    btn.disabled = true;
 
     try {
+      const meta = document.getElementById('inpMeta').value.trim();
+      const periodo = document.getElementById('inpEstrategiaPeriodo').value.trim();
+      const year = Number(document.getElementById('selAnio').value);
+      if (!meta || !periodo) { alert('Completa Meta y Estrategia del Periodo.'); return; }
+
       await apiCreateGoal(objectiveId, { title: meta, description: periodo, year });
       document.getElementById('inpMeta').value = '';
       document.getElementById('inpEstrategiaPeriodo').value = '';
       await refreshTable();
     } catch (e) {
-      alert('No se pudo crear la meta. Revisa el rango de años del objetivo.');
+      alert('No se pudo crear la meta.');
+    } finally {
+      savingGoal = false;
+      btn.disabled = false;
     }
   });
 
-  /**
-   * Table button actions:
-   * - toIndicators: persist context and go to indicators
-   * - del: delete goal and refresh list
-   */
+  // Acciones sobre filas
   $tb.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -1404,10 +1406,6 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
 
 
 // --- Single indicator evidence upload (server) ------------------------------
-/**
- * Minimal page to upload an evidence file to an indicator (server endpoint).
- * Keeps it for completeness; not tied to the metas flow.
- */
 async function showIndicadoresPage(id) {
   $title.textContent = `Indicadores — Registro ${id}`;
   $view.innerHTML = `
@@ -1454,30 +1452,32 @@ async function showIndicadoresPage(id) {
 
 
 // --- Router -----------------------------------------------------------------
-/**
- * Central hash router. Matches:
- *  - #/indicadores/goal/:id
- *  - #/metas/:dimension/:objetivo
- *  - dashboard, reportes, planes, and dimension lists
- */
+// Bloqueo de reentradas del router para evitar dobles render
+let __routing = false;
 async function router() {
-  const hash = location.hash || '#/dashboard';
+  if (__routing) return;
+  __routing = true;
+  try {
+    const hash = location.hash || '#/dashboard';
 
-  const mGoal = hash.match(/^#\/indicadores\/goal\/([^/]+)$/);
-  if (mGoal) return showIndicatorsForGoal(decodeURIComponent(mGoal[1]));
+    const mGoal = hash.match(/^#\/indicadores\/goal\/([^/]+)$/);
+    if (mGoal) { await showIndicatorsForGoal(decodeURIComponent(mGoal[1])); return; }
 
-  const mMetas = hash.match(/^#\/metas\/([^/]+)\/(.+)$/);
-  if (mMetas) return showStrategicGoalsEditor(decodeURIComponent(mMetas[1]), decodeURIComponent(mMetas[2]));
+    const mMetas = hash.match(/^#\/metas\/([^/]+)\/(.+)$/);
+    if (mMetas) { await showStrategicGoalsEditor(decodeURIComponent(mMetas[1]), decodeURIComponent(mMetas[2])); return; }
 
-  if (hash === '#/dashboard') return showDashboard();
-  if (hash === '#/reportes') return showReportes();
-  if (hash === '#/planes/form') return isEditor() ? showPlanForm() : showForbidden('Solo los editores pueden crear/editar planes.');
-  if (hash === '#/planes/liderazgo') return showPlanList('LIDERAZGO');
-  if (hash === '#/planes/gestion') return showPlanList('GESTION_PEDAGOGICA');
-  if (hash === '#/planes/convivencia') return showPlanList('CONVIVENCIA_ESCOLAR');
-  if (hash === '#/planes/recursos') return showPlanList('GESTION_RECURSOS');
+    if (hash === '#/dashboard') return showDashboard();
+    if (hash === '#/reportes') return showReportes();
+    if (hash === '#/planes/form') return isEditor() ? showPlanForm() : showForbidden('Solo los editores pueden crear/editar planes.');
+    if (hash === '#/planes/liderazgo') return showPlanList('LIDERAZGO');
+    if (hash === '#/planes/gestion') return showPlanList('GESTION_PEDAGOGICA');
+    if (hash === '#/planes/convivencia') return showPlanList('CONVIVENCIA_ESCOLAR');
+    if (hash === '#/planes/recursos') return showPlanList('GESTION_RECURSOS');
 
-  return showDashboard();
+    return showDashboard();
+  } finally {
+    __routing = false;
+  }
 }
 
 
@@ -1491,11 +1491,11 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 window.addEventListener('DOMContentLoaded', setupAccordionTransition);
 
-// Direct nav shortcuts if elements exist in the DOM.
+// Accesos directos si existen en DOM
 document.getElementById('nav-dashboard')?.addEventListener('click', e => { e.preventDefault(); location.hash = '#/dashboard'; });
 document.getElementById('nav-plan-form')?.addEventListener('click', e => { e.preventDefault(); location.hash = '#/planes/form'; });
 
-// Ensure only one accordion is open at a time.
+// Asegura que solo un acordeón esté abierto a la vez
 document.querySelectorAll('.nav__details').forEach(d => {
   d.addEventListener('toggle', () => {
     if (d.open) document.querySelectorAll('.nav__details').forEach(o => { if (o !== d) o.open = false; });
