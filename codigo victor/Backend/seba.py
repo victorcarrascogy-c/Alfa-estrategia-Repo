@@ -88,12 +88,17 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     cred_exc = HTTPException(status_code=401, detail="No autorizado")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # DEBUG: mostrar payload recibido
+        print("[AUTH] token payload:", payload)
         uid = payload.get("uid")
         if uid is None:
             raise cred_exc
     except JWTError:
+        print("[AUTH] JWTError decoding token")
         raise cred_exc
     user = db.get(UserModel, uid)
+    # DEBUG: mostrar usuario y rol (si existe)
+    print("[AUTH] resolved user:", getattr(user, "id", None), getattr(user, "role", None))
     if not user or not user.is_active:
         raise cred_exc
     return user
@@ -198,16 +203,20 @@ class Indicator(IndicatorCreate):
     id: int
     goal_id: int
 
+
+
 class EvidenceCreate(BaseModel):
     description: Optional[str] = ""
     filename: str
     original_filename: Optional[str] = None
+    # NUEVO: permite enviar descripción; filename lo setea el backend.
+    plan_id: Optional[int] = None  # anclaje fino por subdimensión/acción
 
 class Evidence(EvidenceCreate):
     id: int
-    indicator_id: int
+    indicator_id: Optional[int] = None
     uploaded_at: datetime
-
+    download_url: Optional[str] = None
 class ObjectiveEvidenceOut(BaseModel):
     id: int
     indicator_id: int
@@ -370,7 +379,37 @@ class EvidenceModel(Base):
     original_filename = Column(String(255), nullable=True)
     uploaded_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     indicator_id = Column(Integer, ForeignKey("indicators.id", ondelete="RESTRICT"), nullable=False, index=True)
+   # permitir evidencias que pertenezcan sólo a un plan (sin indicador)
+    indicator_id = Column(Integer, ForeignKey("indicators.id", ondelete="RESTRICT"), nullable=True, index=True)
     indicator = relationship("IndicatorModel", back_populates="evidences")
+    plan_id = Column(Integer, ForeignKey("strategic_plans.id", ondelete="SET NULL"), nullable=True, index=True)
+    plan = relationship("StrategicPlanModel", backref="evidences")
+
+
+def evidence_to_pydantic(m: EvidenceModel) -> Evidence:
+    return Evidence(
+        id=m.id,
+        indicator_id=getattr(m, "indicator_id", None),
+        plan_id=getattr(m, "plan_id", None),
+        description=m.description or "",
+        filename=m.filename,
+        original_filename=m.original_filename,
+        uploaded_at=m.uploaded_at,
+        download_url=f"/uploads/{m.filename}",
+    )
+
+
+class PlanOptionOut(BaseModel):
+    id: int
+    label: str
+    subdimension: Optional[str] = None
+    action: Optional[str] = None
+    dimension: Optional[str] = None
+    school_id: Optional[int] = None
+
+    class Config:
+        orm_mode = True
+
 
 class UserModel(Base):
     __tablename__ = "users"
@@ -458,10 +497,12 @@ def evidence_to_pydantic(m: EvidenceModel) -> Evidence:
     return Evidence(
         id=m.id,
         indicator_id=m.indicator_id,
+        plan_id=getattr(m, "plan_id", None),
         description=m.description or "",
         filename=m.filename,
         original_filename=m.original_filename,
-        uploaded_at=m.uploaded_at
+        uploaded_at=m.uploaded_at,
+        download_url=f"/uploads/{m.filename}",
     )
 
 def plan_to_pydantic(m: StrategicPlanModel) -> StrategicPlan:
@@ -633,6 +674,8 @@ def list_goals(objective_id: int, skip: int = Query(0, ge=0), limit: int = Query
     goals = db.execute(stmt).scalars().all()
     return [goal_to_pydantic(g) for g in goals]
 
+
+
 @app.get("/goals/{goal_id}", response_model=Goal)
 def get_goal(goal_id: int, db: Session = Depends(get_db)):
     m = db.get(GoalModel, goal_id)
@@ -715,6 +758,48 @@ def delete_indicator(indicator_id: int, db: Session = Depends(get_db)):
     db.delete(m)
     return Response(status_code=204)
 
+
+# === Evidencias por PLAN (subdimensión/acción) ===
+
+@app.get("/plans/{plan_id}/evidences", response_model=List[Evidence])
+def list_plan_evidences(plan_id: int, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
+    if not db.get(StrategicPlanModel, plan_id):
+        raise HTTPException(status_code=404, detail="Plan not found")
+    stmt = select(EvidenceModel).where(EvidenceModel.plan_id == plan_id).order_by(EvidenceModel.id).offset(skip).limit(limit)
+    evs = db.execute(stmt).scalars().all()
+    return [evidence_to_pydantic(e) for e in evs]
+
+@app.post("/plans/{plan_id}/evidences", response_model=Evidence, status_code=201)
+def upload_plan_evidence(plan_id: int, file: UploadFile = File(...), description: str = Form(""), db: Session = Depends(get_db)):
+    plan = db.get(StrategicPlanModel, plan_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type '{ext}'")
+    filename = f"{uuid.uuid4()}{ext}"
+    dest = UPLOAD_DIR / filename
+    bytes_written = 0
+    with dest.open("wb") as buffer:
+        while True:
+            chunk = file.file.read(COPY_CHUNK_SIZE)
+            if not chunk:
+                break
+            bytes_written += len(chunk)
+            if bytes_written > MAX_UPLOAD_BYTES:
+                dest.unlink(missing_ok=True)
+                raise HTTPException(status_code=413, detail="File too large")
+            buffer.write(chunk)
+    m = EvidenceModel(
+        plan_id=plan_id,
+        description=description,
+        filename=filename,
+        original_filename=file.filename,
+        uploaded_at=datetime.utcnow()
+    )
+    db.add(m)
+    db.flush()
+    return evidence_to_pydantic(m)
 @app.post("/indicators/{indicator_id}/evidences", response_model=Evidence, status_code=201)
 def upload_evidence(indicator_id: int, file: UploadFile = File(...), description: str = Form(""), db: Session = Depends(get_db)):
     ind = db.get(IndicatorModel, indicator_id)

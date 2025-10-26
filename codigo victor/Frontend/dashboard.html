@@ -22,15 +22,101 @@
     .nav__details>.plan--item::after {
       content: '▸';
     }
+
+    /* Modal + evidencias */
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal__content {
+      background: #fff;
+      width: 820px;
+      max-width: 95vw;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+    }
+
+    .modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .modal__close {
+      border: 0;
+      background: transparent;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .evidence-upload {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid #eee;
+      margin-top: 6px;
+    }
+
+    .evidence-list .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Inputs del uploader */
+    #plan-select {
+      min-width: 260px;
+      padding: 6px 8px;
+      border: 1px solid #cfd6e4;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    #evidence-file {
+      flex: 1 1 240px;
+    }
+
+    #evidence-desc {
+      flex: 1 1 260px;
+      padding: 6px 8px;
+      border: 1px solid #cfd6e4;
+      border-radius: 6px;
+    }
+
+    #evidence-upload-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #6b7280;
+      margin-left: 4px;
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- Left rail: persistent app navigation and brand.
-       This is static chrome for the SPA; views render on the right. -->
+  <!-- Left rail: persistent app navigation and brand. -->
   <aside class="sidebar">
-    <!-- Brand block at the top of the sidebar (logo + two-line wordmark). -->
     <div class="brand">
       <div class="brand__logo" aria-hidden="true"></div>
       <div class="brand__text">
@@ -39,28 +125,19 @@
       </div>
     </div>
 
-    <!-- Primary navigation.
-         Each link sets a hash route that the JS router (app_dashboard.js) listens to.
-         The <details> block groups the four strategic plan dimensions. -->
     <nav class="nav">
       <div class="nav__section"></div>
 
-      <!-- Go to the main dashboard route (#/dashboard). -->
       <a id="nav-dashboard" class="nav__item" href="#/dashboard">
         <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-51.png" alt="Ícono Dashboard" class="nav__icon">
         Dashboard
       </a>
 
-      <!-- Collapsible group for the Strategic Plan module. -->
       <details class="nav__details">
-        <!-- The <summary> acts as the clickable row to open/close the submenu. -->
         <summary class="nav__item plan--item">
           <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-68.png" alt="Ícono Plan" class="nav__icon">
           Plan Estratégico
         </summary>
-
-        <!-- Submenu: each item navigates to a dimension-specific list view.
-             Routes are handled by app_dashboard.js → showPlanList(). -->
         <div class="nav__submenu-content">
           <ul>
             <li><a class="nav__item" id="link-liderazgo" href="#/planes/liderazgo">Liderazgo</a></li>
@@ -71,21 +148,17 @@
         </div>
       </details>
 
-      <!-- Shortcut to the Plan Creation form (#/planes/form). Visibility can be
-           toggled by role in app_dashboard.js (hidden for non-editors). -->
       <a id="nav-plan-form" class="nav__item" href="#/planes/form">
         <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-54.png" alt="Ícono Formulario" class="nav__icon">
         Formulario Planes Estratégicos
       </a>
 
-      <!-- Reports module placeholder (#/reportes). -->
       <a id="nav-reportes" class="nav__item" href="#/reportes">
         <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-59.png" alt="Ícono Reportes" class="nav__icon">
         Reportes
       </a>
     </nav>
 
-    <!-- Bottom section with a sign-out link that returns to the login page. -->
     <div class="nav__section">
       <a href="login.html" class="nav__item close--sesion">
         <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-58.png" alt="Ícono Cerrar Sesión" class="nav__icon">
@@ -94,12 +167,10 @@
     </div>
   </aside>
 
-  <!-- Top banner: scrolling row of logos across the top of the content area.
-       This sits outside the main content router region but inside the page body. -->
+  <!-- Top banner: logos -->
   <aside class="container">
     <div class="container__top">
       <div class="logos-wrapper">
-        <!-- Logos carousel (duplicated set for seamless scroll effect). -->
         <img src="Imagenes/LOGOS/logo_sin texto-04.png" alt="Logo Colegio 11" class="logo-top">
         <img src="Imagenes/LOGOS/Insignias - logos colegios/lla-trans.png" alt="Logo Colegio 7" class="logo-top">
         <img src="Imagenes/LOGOS/Insignias - logos colegios/Colegio San Jose - Cabrero-transparente.png"
@@ -120,7 +191,7 @@
         <img src="Imagenes/LOGOS/Insignias - logos colegios/logo-Jardin-Fabiola-rounded (1).png" alt="Logo Colegio 10"
           class="logo-top">
 
-        <!-- Duplicated sequence to create continuous marquee-like scrolling. -->
+        <!-- duplicated for marquee -->
         <img src="Imagenes/LOGOS/logo_sin texto-04.png" alt="Logo Colegio 11" class="logo-top">
         <img src="Imagenes/LOGOS/Insignias - logos colegios/lla-trans.png" alt="Logo Colegio 7" class="logo-top">
         <img src="Imagenes/LOGOS/Insignias - logos colegios/Colegio San Jose - Cabrero-transparente.png"
@@ -144,24 +215,42 @@
     </div>
   </aside>
 
-  <!-- Right side: main application shell.
-       The hash-based router sets the <h1> text and injects the current view into #view. -->
+  <!-- Main app -->
   <main class="main">
     <header class="header">
-      <!-- The router updates this title depending on the current module. -->
       <h1 id="pageTitle">Panel de Gestión</h1>
-
-      <!-- Optional container used by some views that render a whole-page component. -->
       <main id="viewContainer"></main>
     </header>
-
-    <!-- Primary outlet where all SPA pages are rendered (cards, lists, forms…). -->
     <section id="view"></section>
   </main>
 
-  <!-- App entry point.
-       This ES module wires the router, loads views on demand, and handles role-based UI. -->
+  <!-- App entry point -->
   <script type="module" src="js/app_dashboard.js"></script>
 </body>
+
+<!-- Modal global de evidencias (AHORA con selector de subdimensión/acción) -->
+<div id="evidence-modal" class="modal hidden">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h3>Evidencias</h3>
+      <button class="modal__close" id="evidence-modal-close" aria-label="Cerrar">×</button>
+    </div>
+
+    <div id="evidence-list" class="evidence-list"></div>
+
+    <div id="evidence-upload" class="evidence-upload">
+      <!-- NUEVO: selector del plan (subdimensión/acción) -->
+      <select id="plan-select" aria-label="Subdimensión / Acción destino">
+        <option value="">Seleccione subdimensión / acción…</option>
+      </select>
+
+      <input type="file" id="evidence-file" />
+      <input type="text" id="evidence-desc" placeholder="Descripción (opcional)" />
+      <button id="evidence-upload-btn" class="btn">Subir</button>
+
+      <span class="hint">Se guardará en la subdimensión/acción seleccionada.</span>
+    </div>
+  </div>
+</div>
 
 </html>

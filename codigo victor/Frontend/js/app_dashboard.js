@@ -167,8 +167,9 @@ const $title = document.getElementById('pageTitle');
 
 /** Cabecera Authorization si existe token. */
 function authHeaders() {
-  const t = localStorage.getItem("token");
-  return t ? { Authorization: "Bearer " + t } : {};
+  // intenta ambas claves habituales por si el login guardó "access_token" o "token"
+  const t = localStorage.getItem('token') || localStorage.getItem('access_token') || null;
+  return t ? { "Authorization": "Bearer " + t } : {};
 }
 
 /** Carga un fragmento HTML sin cache y devuelve texto. */
@@ -474,6 +475,7 @@ async function showPlanList(dimensionValue) {
         </div>
         <div class="obj-item__actions">
           <button class="btn btn--sm" data-act="ver" data-obj="${oEnc}">Ir al objetivo</button>
+          <button class="btn btn--sm btn--secondary" data-act="met" data-obj="${oEnc}">Metas</button>
           <button class="btn btn--sm btn--ghost" data-act="rec" data-obj="${oEnc}">Recursos del objetivo</button>
           <button class="btn btn--sm" data-act="evi" data-obj="${oEnc}">Evidencia</button>
           <span class="obj-item__meta">${items.length} acción(es)</span>
@@ -491,6 +493,7 @@ async function showPlanList(dimensionValue) {
     if (btn.dataset.act === 'ver') showObjectiveDetail(dimensionValue, objetivo);
     if (btn.dataset.act === 'rec') showObjectiveResources(dimensionValue, objetivo);
     if (btn.dataset.act === 'evi') showEvidenceUpload(dimensionValue, objetivo);
+    if (btn.dataset.act === 'met') showStrategicGoalsEditor(dimensionValue, objetivo);
   });
 
   document.getElementById('btnRefrescar')?.addEventListener('click', () => {
@@ -508,12 +511,14 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
 
   $title.textContent = `${tituloDimension(dimensionValue)} — Objetivo`;
   $view.innerHTML = `
-    <section class="card card--full">
-      <header class="card__header" style="display:flex;gap:.5rem;align-items:center;">
-        <button id="btnFiltros" class="btn btn--secondary">Filtrar / Ordenar</button>
-        <button class="btn" id="btnMetas">Metas Estratégicas</button>
-        <button class="btn btn--ghost" id="btnVolver">← Volver</button>
+      <section class="card card--full">
+      <header class="card__header" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn--ghost" id="btnBack">← Volver</button>
         <h2 style="margin:0;">${esc(objetivo)}</h2>
+        <div style="margin-left:auto;display:flex;gap:.5rem;">
+          <!-- evidencias eliminado -->
+         <!-- otros botones si los necesita -->
+        </div>
       </header>
 
       <div id="filterArea" class="filter-area" style="display:none; padding:15px; border-bottom: 1px solid var(--border-color);">
@@ -534,7 +539,6 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
                 <th>Término</th>
                 <th>Programa</th>
                 <th>Responsable</th>
-                <th>Evidencias</th>
               </tr>
             </thead>
             <tbody>
@@ -549,7 +553,6 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
                   <td>${fechaCL(r.fecha_termino)}</td>
                   <td>${esc(r.programa_asociado)}</td>
                   <td>${esc(r.responsable)}</td>
-                  <td><button class="btn btn--sm ev-open" data-objname="${esc(objetivo)}">Evidencias <span class="chip ev-count">0</span></button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -558,10 +561,8 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
     </section>
   `;
 
-  document.getElementById('btnVolver')?.addEventListener('click', () => showPlanList(dimensionValue));
-  document.getElementById('btnMetas')?.addEventListener('click', () => {
-    navigateHash(`#/metas/${encodeURIComponent(dimensionValue)}/${encodeURIComponent(objetivo)}`);
-  });
+  // Volver a la lista de planes
+  document.getElementById('btnBack')?.addEventListener('click', () => showPlanList(dimensionValue));
 
   const $filterBtn = document.getElementById('btnFiltros');
   const $filterArea = document.getElementById('filterArea');
@@ -571,7 +572,7 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
     $filterBtn.textContent = isVisible ? 'Filtrar / Ordenar' : 'Ocultar Filtros';
   });
 
-  // Resolver objectiveId por (dimension, nombre) con caché
+  // Resolver objectiveId por (dimension, nombre) con caché (se deja por si otras funciones lo usan)
   let objectiveId = getCachedObjectiveId(dimensionValue, objetivo);
   if (!objectiveId) {
     try {
@@ -580,80 +581,7 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
     } catch (e) { console.error(e); }
   }
 
-  async function apiCountEvidencesByObjective(oid) {
-    try {
-      const res = await fetch(`${API}/objectives/${oid}/evidences/count`, { headers: { ...authHeaders() } });
-      return res.ok ? await res.json() : { count: 0 };
-    } catch { return { count: 0 }; }
-  }
-  async function apiListEvidencesByObjective(oid) {
-    const res = await fetch(`${API}/objectives/${oid}/evidences`, { headers: { ...authHeaders() } });
-    if (!res.ok) throw new Error('No se pudo listar evidencias');
-    return res.json();
-  }
-
-  // Actualizar badges
-  if (objectiveId) {
-    try {
-      const { count } = await apiCountEvidencesByObjective(objectiveId);
-      $view.querySelectorAll('.ev-count').forEach(el => el.textContent = count ?? 0);
-    } catch { }
-  } else {
-    $view.querySelectorAll('.ev-open').forEach(btn => { btn.disabled = true; btn.title = 'Objetivo no reconocido'; });
-  }
-
-  // Modal de evidencias (si no existe, crearlo)
-  let modal = document.getElementById('ev-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'ev-modal';
-    modal.style.cssText = 'position:fixed;inset:0;display:none;background:rgba(0,0,0,.4);z-index:9999;';
-    modal.innerHTML = `
-      <div style="max-width:860px;margin:6vh auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2)">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee">
-          <h3 style="margin:0">Evidencias del objetivo</h3>
-          <button id="ev-close" class="btn btn--ghost" title="Cerrar">✕</button>
-        </div>
-        <div id="ev-body" style="padding:12px 16px;max-height:70vh;overflow:auto"></div>
-      </div>`;
-    document.body.appendChild(modal);
-    modal.querySelector('#ev-close').onclick = () => (modal.style.display = 'none');
-    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-  }
-
-  // Abrir modal y listar evidencias
-  $view.querySelectorAll('.ev-open').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!objectiveId) return;
-      const body = document.getElementById('ev-body');
-      body.innerHTML = 'Cargando…';
-      modal.style.display = 'block';
-      try {
-        const evs = await apiListEvidencesByObjective(objectiveId);
-        if (!evs.length) {
-          body.innerHTML = '<div class="card">Sin evidencias aún.</div>';
-          return;
-        }
-        const rows = evs.map(ev => `
-          <tr>
-            <td>${esc(ev.original_filename || ev.filename)}</td>
-            <td>${esc(ev.indicator_title || '')}</td>
-            <td>${new Date(ev.uploaded_at).toLocaleString('es-CL')}</td>
-            <td><a class="btn btn--sm" href="${API}${ev.download_url}">Descargar</a></td>
-          </tr>`).join('');
-        body.innerHTML = `
-          <div class="table-wrap">
-            <table class="plan-table">
-              <thead><tr><th>Archivo</th><th>Indicador</th><th>Fecha</th><th></th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>`;
-      } catch (e) {
-        console.error(e);
-        body.innerHTML = '<div class="card">No se pudo cargar evidencias.</div>';
-      }
-    });
-  });
+  // Nota: se removió aquí el código de "Evidencias" (badges, modal y llamadas a /objectives/.../evidences)
 }
 
 
@@ -705,12 +633,14 @@ async function idbDelete(id) {
 
 
 // --- View: Evidencias (sube a backend y lista por Objetivo) -----------------
+
+// ...existing code...
 async function showEvidenceUpload(dimensionValue, objetivo) {
-  // Garantizar Objetivo por (dimension, objetivo)
+  // 1) Garantizar Objetivo
   const objective = await ensureObjectiveByName(dimensionValue, objetivo);
   const objectiveId = objective.id;
 
-  // Garantizar una Meta e Indicador “Evidencias”
+  // 2) Garantizar Meta (año actual) e Indicador “Evidencias”
   const metas = await apiListGoalsByObjective(objectiveId);
   let goalId = metas[0]?.id;
   if (!goalId) {
@@ -722,14 +652,23 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
     });
     goalId = nueva.id;
   }
+
   const indics = await apiListIndicatorsByGoal(goalId);
   let indicator = indics.find(x => (x.title || '').toLowerCase() === 'evidencias');
   if (!indicator) {
     indicator = await apiCreateIndicator(goalId, { title: 'Evidencias', unit: '', target: '' });
   }
-  const indicatorId = indicator.id;
+  const indicatorId = indicator?.id;
+  if (!indicatorId) {
+    alert('No se pudo inicializar el indicador "Evidencias".');
+    return;
+  }
 
-  // UI
+  // obtener planes (acciones) para este objetivo (para permitir vincular evidencias a una acción)
+  const plansByDim = await getPlansByDimension(dimensionValue);
+  const plansForObjective = (plansByDim.groups.get(objetivo) || []).slice();
+
+  // 3) UI (ahora incluye select de acción/plan)
   $title.textContent = `${tituloDimension(dimensionValue)} — Evidencias`;
   $view.innerHTML = `
     <section class="card card--full">
@@ -737,81 +676,151 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
         <button class="btn btn--ghost" id="btnBack">← Volver</button>
         <h2 style="margin:0;">Evidencias — ${esc(objetivo)}</h2>
       </header>
+
       <div class="card__body">
         <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
-          <input id="fileInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" multiple />
-          <input id="fileDesc" class="inp" placeholder="Descripción (opcional)" style="min-width:260px;">
+          <label style="display:flex;gap:.5rem;align-items:center;">
+            <span>Vincular a acción:</span>
+            <select id="selAction" class="inp">
+              <option value="">(No vincular / usar indicador)</option>
+              ${plansForObjective.map(p => `<option value="${p.id}">${esc(p.accion || ('Acción #' + p.id))} — ${esc(p.colegio || '')}</option>`).join('')}
+            </select>
+          </label>
+
+          <input id="fileInput" type="file"
+                 accept=".pdf,.png,.jpg,.jpeg,.xlsx,.docx"
+                 multiple />
+          <textarea id="fileDesc" class="inp inp--lg" placeholder="Descripción (opcional)" rows="3" style="min-width:380px;max-width:60vw;"></textarea>
           <button class="btn" id="btnUpload">Subir</button>
           <small>Se guardará en el servidor y quedará visible en “Ir al objetivo → Evidencias”.</small>
         </div>
+
         <hr/>
+
         <div class="table-wrap">
           <table class="plan-table">
             <thead>
               <tr>
                 <th>Archivo</th>
-                <th>Indicador</th>
+                <th>Pertenece a</th>
                 <th>Fecha</th>
                 <th></th>
+                <th>Descripción</th>
               </tr>
             </thead>
-            <tbody id="tbFiles"><tr><td colspan="4">Cargando…</td></tr></tbody>
+            <tbody id="tbFiles"><tr><td colspan="5">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
     </section>
   `;
 
-  document.getElementById('btnBack')?.addEventListener('click', () => showPlanList(dimensionValue));
+  document.getElementById('btnBack').onclick = () => showObjectiveDetail(dimensionValue, objetivo);
 
-  // Listar evidencias desde backend (por objetivo)
+  // 4) Listado: trae evidencias del indicador y de las acciones del objetivo y las mezcla
   async function refreshList() {
-    const res = await fetch(`${API}/objectives/${objectiveId}/evidences`, { headers: { ...authHeaders() } });
-    const evs = res.ok ? await res.json() : [];
     const tb = document.getElementById('tbFiles');
-    if (!evs.length) {
-      tb.innerHTML = `<tr><td colspan="4">Aún no hay evidencias para este objetivo.</td></tr>`;
-      return;
+    tb.innerHTML = `<tr><td colspan="5">Cargando…</td></tr>`;
+    try {
+      // evidencias guardadas en el indicador
+      const resInd = await fetch(`${API}/indicators/${indicatorId}/evidences?limit=500`, { headers: { ...authHeaders() } });
+      const evsInd = resInd.ok ? await resInd.json() : [];
+
+      // evidencias por cada plan/acción del objetivo
+      const planFetches = plansForObjective.map(p =>
+        fetch(`${API}/plans/${p.id}/evidences?limit=500`, { headers: { ...authHeaders() } })
+          .then(r => r.ok ? r.json() : [])
+          .then(list => list.map(e => ({ ...e, _plan: p })))
+          .catch(() => [])
+      );
+      const planEvsArrays = await Promise.all(planFetches);
+      const evsPlan = planEvsArrays.flat();
+
+      const all = [
+        ...evsInd.map(e => ({ ...e, _kind: 'indicator' })),
+        ...evsPlan.map(e => ({ ...e, _kind: 'plan' }))
+      ].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+
+      if (!all.length) {
+        tb.innerHTML = `<tr><td colspan="5">Sin evidencias aún.</td></tr>`;
+        return;
+      }
+
+      // construir filas con control de ancho y wrapping en la celda de descripción
+      tb.innerHTML = all.map(ev => {
+        // determinar etiqueta de acción/plan relacionada (puede venir desde _plan o desde campos del backend)
+        const actionLabel = ev._plan?.accion || ev.plan_title || (ev.plan_id ? ('Acción #' + ev.plan_id) : '');
+        // construir bloque de descripción + acción debajo
+        const descHtml = `
+           <div style="white-space:pre-wrap; overflow-wrap:break-word; word-break:break-word; max-width:48vw;">${esc(ev.description || '—')}</div>
+           ${actionLabel ? `<div style="font-size:12px;color:var(--muted-color,#666);margin-top:6px;white-space:normal;">Pertenece a: <strong>${esc(actionLabel)}</strong></div>` : ''}
+         `;
+        return `
+           <tr>
+             <td style="max-width:22vw; white-space:normal; overflow-wrap:break-word;">${esc(ev.original_filename || ev.filename)}</td>
+             <td style="white-space:normal;">${ev._kind === 'plan' ? esc(ev._plan?.accion || ('Acción #' + ev._plan?.id)) : esc(ev.indicator_title || 'Indicador')}</td>
+             <td>${new Date(ev.uploaded_at).toLocaleString('es-CL')}</td>
+             <td><a class="btn btn--sm" href="${API}${ev.download_url || ('/uploads/' + ev.filename)}" target="_blank" rel="noopener">Descargar</a></td>
+             <td style="max-width:48vw; white-space:normal; vertical-align:top;">${descHtml}</td>
+           </tr>
+         `;
+      }).join('');
+
+    } catch (e) {
+      console.error(e);
+      tb.innerHTML = `<tr><td colspan="5">No se pudo cargar evidencias.</td></tr>`;
     }
-    tb.innerHTML = evs.map(ev => `
-      <tr>
-        <td>${esc(ev.original_filename || ev.filename)}</td>
-        <td>${esc(ev.indicator_title || '')}</td>
-        <td>${new Date(ev.uploaded_at).toLocaleString('es-CL')}</td>
-        <td><a class="btn btn--sm" href="${API}${ev.download_url}" target="_blank" rel="noopener">Descargar</a></td>
-      </tr>
-    `).join('');
   }
 
-  // Subir archivos al indicador “Evidencias”
-  document.getElementById('btnUpload')?.addEventListener('click', async () => {
+  // 5) Subida (multiarchivo) — si se selecciona una acción sube a /plans/:id/evidences, si no a indicador
+  document.getElementById('btnUpload').addEventListener('click', async () => {
     const inp = document.getElementById('fileInput');
-    const desc = document.getElementById('fileDesc').value || '';
-    if (!inp.files || !inp.files.length) { alert('Selecciona uno o más archivos primero.'); return; }
+    const desc = (document.getElementById('fileDesc').value || '').trim();
+    const sel = document.getElementById('selAction').value;
+    if (!inp.files || !inp.files.length) {
+      alert('Selecciona uno o más archivos primero.');
+      return;
+    }
 
     for (const file of inp.files) {
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('description', desc);
-      const up = await fetch(`${API}/indicators/${indicatorId}/evidences`, {
-        method: 'POST',
-        headers: { ...authHeaders() },
-        body: fd
-      });
-      if (!up.ok) {
-        const t = await up.text().catch(() => '');
-        alert('No se pudo subir una evidencia:\n' + (t || up.status));
+      if (desc) fd.append('description', desc);
+
+      const url = sel ? `${API}/plans/${sel}/evidences` : `${API}/indicators/${indicatorId}/evidences`;
+      console.log('Subiendo archivo:', file.name, '->', url, 'token?', !!localStorage.getItem('token'));
+      try {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { ...authHeaders() }, // no set Content-Type for multipart
+          body: fd
+        });
+
+        const text = await resp.text().catch(() => '');
+        console.log('Respuesta servidor:', resp.status, text);
+
+        if (!resp.ok) {
+          alert(`No se pudo subir "${file.name}": HTTP ${resp.status}\n${text || 'sin mensaje del servidor'}`);
+          return; // detener si falla
+        }
+      } catch (err) {
+        console.error('Error fetch:', err);
+        alert('Error al enviar petición: ' + (err?.message || err));
         return;
       }
     }
-    document.getElementById('fileInput').value = '';
+
+    // Limpia inputs y refresca listado
+    inp.value = '';
     document.getElementById('fileDesc').value = '';
     await refreshList();
-    alert('Evidencia(s) cargada(s) con éxito.');
   });
 
-  await refreshList();
+
+  // Cargar listado inicial
+  refreshList();
 }
+
 
 
 // --- View: Resources by objective ------------------------------------------
@@ -1501,3 +1510,97 @@ document.querySelectorAll('.nav__details').forEach(d => {
     if (d.open) document.querySelectorAll('.nav__details').forEach(o => { if (o !== d) o.open = false; });
   });
 });
+
+
+// === Evidencias por PLAN (subdimensión/acción) ===
+async function apiListEvidencesByPlan(planId) {
+  const res = await fetch(`${API}/plans/${planId}/evidences`, { headers: { ...authHeaders() } });
+  if (!res.ok) throw new Error('No se pudo listar evidencias del plan');
+  return res.json();
+}
+async function apiUploadEvidenceByPlan(planId, file, description = "") {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('description', description || "");
+  const res = await fetch(`${API}/plans/${planId}/evidences`, {
+    method: 'POST',
+    body: fd,
+    headers: { ...authHeaders(false) }, // no content-type manual en multipart
+  });
+  if (!res.ok) throw new Error('No se pudo subir evidencia');
+  return res.json();
+}
+
+// Modal reutilizable para evidencias por plan
+(function ensurePlanEvidenceModal() {
+  if (document.getElementById('plan-ev-modal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'plan-ev-modal';
+  modal.style.cssText = 'position:fixed;inset:0;display:none;background:rgba(0,0,0,.4);z-index:9999;';
+  modal.innerHTML = `
+    <div style="max-width:860px;margin:6vh auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee">
+        <h3 style="margin:0">Evidencias de la acción</h3>
+        <button id="plan-ev-close" class="btn btn--ghost" title="Cerrar">✕</button>
+      </div>
+      <div id="plan-ev-list" style="max-height:60vh;overflow:auto;padding:12px 16px"></div>
+      <div id="plan-ev-uploader" style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid #eee">
+        <input type="file" id="plan-ev-file" />
+        <textarea id="plan-ev-desc" placeholder="Descripción (opcional)" style="flex:1;min-height:44px;resize:vertical;"></textarea>
+        <button id="plan-ev-upload" class="btn">Subir</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  let CURRENT_PLAN = null;
+  async function refresh() {
+    const list = document.getElementById('plan-ev-list');
+    list.innerHTML = 'Cargando...';
+    try {
+      const data = await apiListEvidencesByPlan(CURRENT_PLAN);
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = '<p>No hay evidencias aún.</p>';
+        return;
+      }
+      list.innerHTML = data.map(ev => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
+          <div>
+            <strong>${ev.original_filename || ev.filename}</strong>
+            <div style="font-size:12px;color:#666">${(ev.description || '') + ' · '}${new Date(ev.uploaded_at).toLocaleString('es-CL')}</div>
+          </div>
+          <div>
+            <a class="btn btn--sm" href="${API}${ev.download_url || ('/uploads/' + ev.filename)}">Descargar</a>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      list.innerHTML = `<p style="color:#c00">${e.message}</p>`;
+    }
+  }
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-plan-evidencias]');
+    if (!btn) return;
+    CURRENT_PLAN = btn.getAttribute('data-plan-evidencias');
+    document.getElementById('plan-ev-modal').style.display = 'block';
+    const canEdit = (window.USER_ROLE === 'editor' || window.USER_ROLE === 'admin');
+    document.getElementById('plan-ev-uploader').style.display = canEdit ? 'flex' : 'none';
+    refresh();
+  });
+  document.getElementById('plan-ev-close').addEventListener('click', () => {
+    document.getElementById('plan-ev-modal').style.display = 'none';
+    CURRENT_PLAN = null;
+  });
+  document.getElementById('plan-ev-upload').addEventListener('click', async () => {
+    const f = document.getElementById('plan-ev-file').files[0];
+    const d = document.getElementById('plan-ev-desc').value;
+    if (!f) { alert('Selecciona un archivo'); return; }
+    try {
+      await apiUploadEvidenceByPlan(CURRENT_PLAN, f, d);
+      document.getElementById('plan-ev-file').value = '';
+      document.getElementById('plan-ev-desc').value = '';
+      await refresh();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+})();
