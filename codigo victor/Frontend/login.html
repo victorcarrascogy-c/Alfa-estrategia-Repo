@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Colegio Arzobispado</title>
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="icon" href="./Imagenes/logo-chico.png">
+</head>
+<body>
+    <div class="contenedor">
+        <form action="submit">
+            
+            <div class="top">
+                <img src="https://colegiosarzobispado.cl/wp-content/uploads/2025/07/logo-texto.png" alt="Logo Colegio Arzobispado" title="Logo Colegio Arzobispado">
+                <h1>Iniciar Sesion</h1>
+            </div>
+
+            <div class="input-box">
+                <input type="text" placeholder="RUT" id="rut" required>
+                <img class="icon" src="../Frontend/Imagenes/ICONOS/extra/user.png"> 
+            </div>
+
+            <div class="input-box2">
+                <input type="password" placeholder="Contraseña" required id="password">
+                <img class="icon" src="../Frontend/Imagenes/ICONOS/extra/lock.png">  
+            </div>
+
+            <div class="button-check">
+                <input type="checkbox" id="ShowPassword">
+                <label for="ShowPassword" class="label-check">Mostrar Contraseña</label>
+            </div>
+            
+            <div id="loginStatus" class="login-status" role="status" aria-live="polite">
+                <div id="progressBar" class="progress-bar"></div>
+                <div id="statusIcon" class="status-icon"></div>
+            </div>
+        
+            <button type="submit" id="submit">Ingresar</button>
+
+        </form>
+
+    </div>
+    <script src="./js/Login.js"></script>
+</body>
+</html>

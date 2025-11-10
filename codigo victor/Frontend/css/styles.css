@@ -1,0 +1,205 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    text-decoration: none;
+}
+
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(to top right, #1E51A0, #27292e );
+}
+
+.contenedor{
+    width: 400px;
+    color: #EBEBEB;
+    padding: 30px 40px;
+    background: #bababa6e;
+    border-radius: 2rem;
+    box-shadow: 0 4px 30px #0001;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(178,178,178,178, .2);
+}
+
+.top{
+    font-size: 18px;
+    text-align: center;
+}
+
+.input-box, .input-box2{
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin: 30px 0;
+}
+.input-box2{margin-bottom: 5px;}
+
+.input-box input, .input-box2 input{
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    border: 2px solid rgba(225, 225, 225, .4);
+    border-radius: 2rem;
+    font-size: 16px;
+    color: white;
+    padding: 20px;
+    transition: .4s ease-in-out;
+}
+
+.input-box input:focus, .input-box2 input:focus{
+    border: 2px solid #03178996;
+    box-shadow: 0 0 25px #03178996;
+}
+
+.input-box input::placeholder, .input-box2 input::placeholder{
+    color: white;
+}
+
+.input-box img, .input-box2 img{
+    position:absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+.button-check{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.button-check input{
+    accent-color: white;
+    margin-right: 5px;
+}
+
+button{
+    width: 100%;
+    height: 50px;
+    background-color: transparent;
+    border: 1px solid white;
+    border-radius: 1rem;
+    font-size:20px;
+    color: white;
+    cursor: pointer;
+    position: relative;
+    transition: 0.4s ease-in-out;
+}
+
+button::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    border-radius: 1rem;
+    background: transparent;
+    z-index: -1;
+}
+
+button:hover{
+    border:none;
+    z-index: 0;
+    background: linear-gradient(to top right, #031889, #27292e);
+    box-shadow: 15px 0 30px #27292e,
+                -15px 0 30px #031889;
+}
+
+.msg{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+/* Oculta el ícono (ojo) predeterminado de 'Mostrar Contraseña' en navegadores basados en Chromium */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+/* Oculta el ícono de llave/ojo de los gestores de contraseñas de Chrome/Edge */
+input[type="password"]::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
+
+/* --- Progreso de la barra --- */
+.login-status {
+    height: 30px; 
+    width: 100%;
+    background-color: #333; 
+    border-radius: 1rem;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden; 
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; 
+}
+
+.progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0; 
+    background-color: transparent; 
+    transition: width 0.7s ease-out, background-color 0.3s ease; 
+}
+
+
+.status-icon {
+    font-size: 20px;
+    color: white;
+    font-weight: bold;
+    margin-right: 15px;
+    z-index: 10; 
+    opacity: 0; 
+    transition: opacity 0.3s ease;
+}
+
+.progress-bar--loading {
+    background-color: #ffc107; 
+    width: 60% !important; 
+    animation: loadingPulse 1.5s infinite;
+}
+
+.progress-bar--success {
+    background-color: #28a745; 
+    width: 100% !important; 
+    animation: none;
+}
+
+.progress-bar--error {
+    background-color: #dc3545; 
+    width: 100% !important; 
+    animation: none;
+}
+
+
+@keyframes loadingPulse {
+    0% { background-color: #ffc107; }
+    50% { background-color: #ffcd38; }
+    100% { background-color: #ffc107; }
+}
+
+
+.status-icon--success {
+    color: #fff; 
+}
+.status-icon--error {
+    color: #fff; 
+}

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard – Colegios Arzobispado SSMA</title>
+
+  <!-- Favicon and page styles.
+       - styles_dashboard.css: global layout, sidebar, cards, tables.
+       - styles_formulario.css: form widgets used by the plan form view. -->
+  <link rel="icon" href="Imagenes/logo-chico.png">
+  <link rel="stylesheet" href="css/styles_dashboard.css">
+  <link rel="stylesheet" href="./css/styles_formulario.css">
+
+  <!-- Tiny tweak for the <details> disclosure arrow inside the sidebar menu. -->
+  <style>
+    .plan--item::-webkit-details-marker { display: none; }
+    .nav__details > .plan--item::after { content: '▸'; }
+  </style>
+</head>
+<body>
+
+  <!-- Left rail: persistent app navigation and brand.
+       This is static chrome for the SPA; views render on the right. -->
+  <aside class="sidebar">
+    <!-- Brand block at the top of the sidebar (logo + two-line wordmark). -->
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true"></div>
+      <div class="brand__text">
+        <div class="brand__title">COLEGIO ARZOBISPADO</div>
+        <div class="brand__subtitle">SSMA. CONCEPCIÓN</div>
+      </div>
+    </div>
+
+    <!-- Primary navigation.
+         Each link sets a hash route that the JS router (app_dashboard.js) listens to.
+         The <details> block groups the four strategic plan dimensions. -->
+    <nav class="nav">
+      <div class="nav__section"></div>
+
+      <!-- Go to the main dashboard route (#/dashboard). -->
+      <a id="nav-dashboard" class="nav__item" href="#/dashboard">
+        <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-51.png" alt="Ícono Dashboard" class="nav__icon">
+        Dashboard
+      </a>
+
+      <!-- Collapsible group for the Strategic Plan module. -->
+      <details class="nav__details">
+        <!-- The <summary> acts as the clickable row to open/close the submenu. -->
+        <summary class="nav__item plan--item">
+          <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-68.png" alt="Ícono Plan" class="nav__icon">
+          Plan Estratégico
+        </summary>
+
+        <!-- Submenu: each item navigates to a dimension-specific list view.
+             Routes are handled by app_dashboard.js → showPlanList(). -->
+        <div class="nav__submenu-content"> 
+          <ul>
+            <li><a class="nav__item" id="link-liderazgo" href="#/planes/liderazgo">Liderazgo</a></li>
+            <li><a class="nav__item" id="link-gestion" href="#/planes/gestion">Gestión Pedagógica</a></li>
+            <li><a class="nav__item" id="link-convivencia" href="#/planes/convivencia">Convivencia Escolar</a></li>
+            <li><a class="nav__item" id="link-recursos" href="#/planes/recursos">Gestión de Recursos</a></li>
+          </ul>
+        </div>
+      </details>
+
+      <!-- Shortcut to the Plan Creation form (#/planes/form). Visibility can be
+           toggled by role in app_dashboard.js (hidden for non-editors). -->
+      <a id="nav-plan-form" class="nav__item" href="#/planes/form">
+        <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-54.png" alt="Ícono Formulario" class="nav__icon">
+        Formulario Planes Estratégicos
+      </a>
+
+      <!-- Reports module placeholder (#/reportes). -->
+      <a id="nav-reportes" class="nav__item" href="#/reportes">
+        <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-59.png" alt="Ícono Reportes" class="nav__icon">
+        Reportes
+      </a>
+    </nav>
+
+    <!-- Bottom section with a sign-out link that returns to the login page. -->
+    <div class="nav__section">
+      <a href="login.html" class="nav__item close--sesion">
+        <img src="/Frontend/Imagenes/ICONOS/blanco/ICONOS-58.png" alt="Ícono Cerrar Sesión" class="nav__icon">
+        Cerrar Sesión
+      </a>
+    </div>
+  </aside>
+
+  <!-- Top banner: scrolling row of logos across the top of the content area.
+       This sits outside the main content router region but inside the page body. -->
+  <aside class="container">
+    <div class="container__top">
+      <div class="logos-wrapper">
+        <img src="Imagenes/LOGOS/logo_sin texto-04.png" alt="Logo Colegio 11" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/lla-trans.png" alt="Logo Colegio 7" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Colegio San Jose - Cabrero-transparente.png" alt="Logo Colegio 1" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHC_.png" alt="Logo Colegio 2" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHCASS-transparente1.png" alt="Logo Colegio 3" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHL SFA-1-transparente.png" alt="Logo Colegio 4" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Instituto San Sebastian Yumbel-1-transparente.png" alt="Logo Colegio 5" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/ISJ-1-transparente.png" alt="Logo Colegio 6" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Logo Jardín Fabiola(1).png" alt="Logo Colegio 8" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Logo-ihch-trans-1v (2).png" alt="Logo Colegio 9" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/logo-Jardin-Fabiola-rounded (1).png" alt="Logo Colegio 10" class="logo-top">
+
+                <img src="Imagenes/LOGOS/logo_sin texto-04.png" alt="Logo Colegio 11" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/lla-trans.png" alt="Logo Colegio 7" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Colegio San Jose - Cabrero-transparente.png" alt="Logo Colegio 1" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHC_.png" alt="Logo Colegio 2" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHCASS-transparente1.png" alt="Logo Colegio 3" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/IHL SFA-1-transparente.png" alt="Logo Colegio 4" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Instituto San Sebastian Yumbel-1-transparente.png" alt="Logo Colegio 5" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/ISJ-1-transparente.png" alt="Logo Colegio 6" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Logo Jardín Fabiola(1).png" alt="Logo Colegio 8" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/Logo-ihch-trans-1v (2).png" alt="Logo Colegio 9" class="logo-top">
+        <img src="Imagenes/LOGOS/Insignias - logos colegios/logo-Jardin-Fabiola-rounded (1).png" alt="Logo Colegio 10" class="logo-top">
+    </div>
+  </aside>
+
+  <!-- Right side: main application shell.
+       The hash-based router sets the <h1> text and injects the current view into #view. -->
+  <main class="main">
+    <header class="header">
+      <!-- The router updates this title depending on the current module. -->
+      <h1 id="pageTitle">Panel de Gestión</h1>
+
+      <!-- Optional container used by some views that render a whole-page component. -->
+      <main id="viewContainer"></main>
+    </header>
+
+    <!-- Primary outlet where all SPA pages are rendered (cards, lists, forms…). -->
+    <section id="view"></section>
+  </main>
+  <div id="evidence-modal" class="modal hidden">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h3>Evidencias</h3>
+      <button class="modal__close" id="evidence-modal-close" aria-label="Cerrar">×</button>
+    </div>
+
+    <div id="evidence-list" class="evidence-list"></div>
+
+    <div id="evidence-upload" class="evidence-upload">
+      <!-- NUEVO: selector del plan (subdimensión/acción) -->
+      <select id="plan-select" aria-label="Subdimensión / Acción destino">
+        <option value="">Seleccione subdimensión / acción…</option>
+      </select>
+
+      <input type="file" id="evidence-file" />
+      <input type="text" id="evidence-desc" placeholder="Descripción (opcional)" />
+      <button id="evidence-upload-btn" class="btn">Subir</button>
+
+      <span class="hint">Se guardará en la subdimensión/acción seleccionada.</span>
+    </div>
+  </div>
+</div>
+
+  <!-- App entry point.
+       This ES module wires the router, loads views on demand, and handles role-based UI. -->
+  <script type="module" src="js/app_dashboard.js"></script>
+</body>
+</html>

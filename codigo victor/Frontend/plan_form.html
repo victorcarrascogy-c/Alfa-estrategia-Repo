@@ -1,0 +1,187 @@
+<!-- Strategic Plan creation form.
+     Purpose:
+     - Capture plan metadata (dimension, school, objective, dates, etc.)
+     - Capture optional resource breakdown with automatic total
+     - Submit is handled by plan_form.js (initPlanForm) -->
+
+<form id="planForm" class="smart-form">
+
+  <!-- ===================== PLAN (top section) ===================== -->
+  <fieldset class="section-card">
+    <!-- Section heading for general plan information -->
+    <h3 class="section-title">Planes estratégicos</h3>
+
+    <!-- Two-column grid for compact layout -->
+    <div class="grid-2">
+      <!-- Dimension selector; options are loaded from the API by plan_form.js -->
+      <div class="field">
+        <label for="p_dimension">Dimensión *</label>
+        <select id="p_dimension"></select>
+      </div>
+
+      <!-- School selector; the script forces a single fixed option -->
+      <div class="field">
+        <label for="p_school">Colegio *</label>
+        <select id="p_school">
+          <option value="Liceo La Asuncion de Talcahuano">Liceo La Asuncion de Talcahuano</option>
+        </select>
+      </div>
+
+      <!-- Strategic Objective (required). Spans 2 columns for better readability -->
+      <div class="field span-2">
+        <label for="p_obj">Objetivo Estratégico *</label>
+        <textarea id="p_obj" rows="2"></textarea>
+      </div>
+
+      <!-- Optional strategy text (free text) -->
+      <div class="field">
+        <label for="p_strategy">Estrategia</label>
+        <input id="p_strategy" />
+      </div>
+
+      <!-- Optional subdimensions (free text / tags) -->
+      <div class="field">
+        <label for="p_sub">Subdimensiones</label>
+        <input id="p_sub" />
+      </div>
+
+      <!-- Optional action title -->
+      <div class="field">
+        <label for="p_action">Acción</label>
+        <input id="p_action" />
+      </div>
+
+      <!-- Optional long description; spans full width -->
+      <div class="field span-2">
+        <label for="p_desc">Descripción</label>
+        <textarea id="p_desc" rows="3"></textarea>
+      </div>
+
+      <!-- Required start date (ISO yyyy-mm-dd) -->
+      <div class="field">
+        <label for="p_start">Fecha Inicio *</label>
+        <input type="date" id="p_start" />
+      </div>
+
+      <!-- Required end date -->
+      <div class="field">
+        <label for="p_end">Fecha Término *</label>
+        <input type="date" id="p_end" />
+      </div>
+
+      <!-- Optional associated program -->
+      <div class="field">
+        <label for="p_program">Programa Asociado</label>
+        <input id="p_program" />
+      </div>
+
+      <!-- Optional responsible person -->
+      <div class="field">
+        <label for="p_resp">Responsable</label>
+        <input id="p_resp" />
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- ===================== RESOURCES (bottom section) ===================== -->
+  <fieldset class="section-card">
+    <!-- Section heading for resources related to the objective -->
+    <h3 class="section-title">Recursos del objetivo</h3>
+
+    <!-- Four-column grid for many small fields -->
+    <div class="grid-4">
+      <!-- Free text describing execution resources needed -->
+      <div class="field span-4">
+        <label for="r_need">Recursos Necesarios de Ejecución</label>
+        <textarea id="r_need" rows="3"></textarea>
+      </div>
+
+      <!-- Simple categorical/short text fields (ATE, TIC, etc.) -->
+      <div class="field">
+        <label for="r_ate">Ate</label>
+        <input id="r_ate" />
+      </div>
+      <div class="field">
+        <label for="r_tic">Tic</label>
+        <input id="r_tic" />
+      </div>
+
+      <!-- Plans and verification means; span 2 columns to fit long text -->
+      <div class="field span-2">
+        <label for="r_planes">Plan(es)</label>
+        <input id="r_planes" />
+      </div>
+      <div class="field span-2">
+        <label for="r_medios">Medios de Verificación</label>
+        <input id="r_medios" />
+      </div>
+
+      <!-- Numeric budget lines (money). plan_form.js listens for input and recomputes total -->
+      <div class="field">
+        <label for="r_subv_gen">Monto Subv. General</label>
+        <input id="r_subv_gen" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_sep">Monto SEP</label>
+        <input id="r_sep" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_pie">Monto PIE</label>
+        <input id="r_pie" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_eib">Monto EIB</label>
+        <input id="r_eib" class="money" inputmode="numeric" />
+      </div>
+
+      <div class="field">
+        <label for="r_mant">Monto Mantención</label>
+        <input id="r_mant" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_proret">Monto Pro retención</label>
+        <input id="r_proret" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_internado">Monto Internado</label>
+        <input id="r_internado" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_reforz">Monto Reforzamiento</label>
+        <input id="r_reforz" class="money" inputmode="numeric" />
+      </div>
+
+      <div class="field">
+        <label for="r_faep">Monto FAEP</label>
+        <input id="r_faep" class="money" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="r_aporte_mun">Monto Aporte Municipal</label>
+        <input id="r_aporte_mun" class="money" inputmode="numeric" />
+      </div>
+
+      <!-- Read-only calculated total; recomputed by plan_form.js on any change -->
+      <div class="field span-2">
+        <label for="r_total">Monto Total</label>
+        <input id="r_total" class="money" readonly />
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- ===================== FORM ACTIONS ===================== -->
+  <div class="section-card form-actions">
+    <!-- Inline feedback area updated by JS (errors / success messages) -->
+    <span id="plansMsg" class="msg"></span>
+
+    <!-- Primary submit: plan_form.js intercepts and posts data to the API -->
+    <button type="submit" class="btn">Guardar plan</button>
+  </div>
+</form>
+
+<!-- (The following closing tag appears to belong to a surrounding layout; kept as-is) -->
+</article>
+
+<!-- Controller script for this form.
+     The module attaches listeners, loads dimension options,
+     auto-computes totals, and submits to the backend. -->
+<script src="Frontend/js/plan_form.js" defer></script>

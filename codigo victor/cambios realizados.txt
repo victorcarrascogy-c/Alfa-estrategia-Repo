@@ -1,0 +1,119 @@
+Seba.py 
+
+from starlette.responses import StreamingResponse
+import requests
+
+
+@app.get("/uploads/{filename}")
+def download_upload(filename: str, db: Session = Depends(get_db)):
+    # intentar recuperar original_filename desde la BD para usar en Content-Disposition
+    ev = db.query(EvidenceModel).filter(EvidenceModel.filename == filename).first()
+    download_name = ev.original_filename if ev and ev.original_filename else filename
+
+    public_id_base = Path(filename).stem
+    public_id_completo = f"evidencias/{public_id_base}"
+    res_type = get_cloudinary_resource_type(filename)
+
+    try:
+        url, options = cloudinary.utils.cloudinary_url(
+            public_id_completo,
+            resource_type=res_type,
+            attachment="attachment",
+        )
+    except Exception as e:
+        print(f"Error al generar URL de Cloudinary: {e}")
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+
+    try:
+        r = requests.get(url, stream=True, timeout=30)
+        r.raise_for_status()
+
+        # importante: permitir que requests decodifique el contenido comprimido si aplica
+        r.raw.decode_content = True
+
+        content_type = r.headers.get("Content-Type", "application/octet-stream")
+        headers = {
+            "Content-Disposition": f'attachment; filename="{download_name}"',
+            "Cache-Control": "no-cache"
+        }
+        # pasar Content-Length si está disponible
+        if "Content-Length" in r.headers:
+            headers["Content-Length"] = r.headers["Content-Length"]
+
+        # usar r.raw (file-like) para StreamingResponse — mantiene los bytes intactos
+        return StreamingResponse(r.raw, media_type=content_type, headers=headers)
+    except Exception as e:
+        print(f"Error proxy download from Cloudinary: {e}")
+
+@app.post("/auth/login", response_model=TokenResponse)
+def login(
+    rut: str = Form(None),
+    password: str = Form(None),
+    payload: Optional[LoginRequest] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate by RUT + password.
+    Accepts either form fields (rut,password) or JSON body matching LoginRequest.
+    """
+    # prefer form fields if provided (frontend sends form-urlencoded)
+    if rut is None or password is None:
+        # try JSON body
+        if payload is None:
+            raise HTTPException(status_code=422, detail="rut and password are required")
+        rut = payload.rut
+        password = payload.password
+
+    # normalize and validate rut (normalize_rut raises HTTPException on invalid)
+    try:
+        rut_norm = normalize_rut(rut)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+    user = db.execute(select(UserModel).where(UserModel.rut == rut_norm)).scalar_one_or_none()
+    if not user or not verify_password(password, user.password):
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    token = create_access_token({"sub": user.rut, "uid": user.id, "role": user.role})
+    return TokenResponse(access_token=token)
+
+
+
+app_dashboard
+
+
+async function downloadUrl(url, filename) {
+  try {
+    const res = await fetch(url, { method: 'GET', headers: { ...authHeaders() } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    const objectUrl = URL.createObjectURL(blob);
+    a.href = objectUrl;
+    a.download = filename || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // liberar memoria unos segundos después
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+  } catch (err) {
+    console.error('downloadUrl error', err);
+    throw err;
+  }
+}
+
+// Delegación global para botones de descarga
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('button[data-download]');
+  if (!btn) return;
+  ev.preventDefault();
+  const url = btn.dataset.download;
+  const filename = btn.dataset.fn || 'archivo';
+  btn.disabled = true;
+  try {
+    await downloadUrl(url, filename);
+  } catch (err) {
+    alert('No se pudo descargar el archivo. Revisa la consola.');
+  } finally {
+    btn.disabled = false;
+  }
+});
