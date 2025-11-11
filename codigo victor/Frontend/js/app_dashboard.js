@@ -40,7 +40,7 @@ function showConfirmationDialog(message) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 9999; display: flex; justify-content: center; align-items: center;';
-
+    
     const modal = document.createElement('div');
     modal.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 380px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5);';
 
@@ -62,7 +62,7 @@ function showConfirmationDialog(message) {
     };
 
     const btnAccept = document.createElement('button');
-    btnAccept.className = 'btn btn--danger';
+    btnAccept.className = 'btn btn--danger'; 
     btnAccept.textContent = 'Aceptar';
     btnAccept.style.cssText = 'flex-grow: 1;';
     btnAccept.onclick = () => {
@@ -111,9 +111,9 @@ function ordenarDatosPorDimension(datos) {
     ordenMap.set(etiqueta, index);
     ordenMap.set(etiqueta.toUpperCase().replace(' ', '_'), index);
   });
-
+  
   return datos.sort((a, b) => {
-    const indexA = ordenMap.get(a.etiqueta) ?? 99;
+    const indexA = ordenMap.get(a.etiqueta) ?? 99; 
     const indexB = ordenMap.get(b.etiqueta) ?? 99;
     return indexA - indexB;
   });
@@ -144,11 +144,11 @@ function pintarDonutDimension(containerId, items) {
   labelEL.className = 'donut-label';
   let currentDegree = 0;
   let gradientString = 'conic-gradient(from 270deg, ';
-
+  
   items.forEach((item, index) => {
     const color = DIMENSION_COLORS[item.etiqueta] || '#ccc';
     // 'percent' es el tamaño del quesito
-    const segmentDegree = (item.percent / 100) * 360;
+    const segmentDegree = (item.percent / 100) * 360; 
     const endDegree = currentDegree + segmentDegree;
 
     gradientString += `${color} ${currentDegree}deg ${endDegree}deg`;
@@ -164,7 +164,7 @@ function pintarDonutDimension(containerId, items) {
     const text = document.createElement('span');
     // 'valor' es el número que se muestra (avance Promedio)
     const valorMostrar = (item.valor !== undefined) ? item.valor : item.percent;
-    text.textContent = `${item.etiqueta} (${valorMostrar.toFixed(2)}%)`;
+    text.textContent = `${item.etiqueta} (${valorMostrar.toFixed(2)}%)`; 
     li.appendChild(colorSwatch);
     li.appendChild(text);
     labelEL.appendChild(li);
@@ -173,10 +173,10 @@ function pintarDonutDimension(containerId, items) {
   });
 
   gradientString += ')';
-  if (currentDegree > 0.1) {
-    chartEl.style.background = gradientString;
+  if (currentDegree > 0.1) { 
+      chartEl.style.background = gradientString;
   } else {
-    chartEl.style.background = 'var(--ring-bg)';
+      chartEl.style.background = 'var(--ring-bg)';
   }
 
   cont.innerHTML = '';
@@ -220,15 +220,15 @@ function pintarBarrasHorizontales(containerId, items, formatValue) {
   });
 }
 
-/* BARRAS VERTICALES */
+/* BARRAS VERTICALES */ 
 function pintarBarrasVerticales(containerId, items, formatValue) {
   const cont = document.getElementById(containerId);
   if (!cont) return;
 
   cont.innerHTML = '';
-
+  
   const maxValor = Math.max(...items.map((it) => it.valor));
-  const maxHeight = 250 - 20;
+  const maxHeight = 250 - 20; 
 
   items.forEach((it) => {
     const col = document.createElement('div');
@@ -242,7 +242,7 @@ function pintarBarrasVerticales(containerId, items, formatValue) {
     bar.style.setProperty('--bar-color', colorVar);
     const ratio = (it.valor / maxValor);
     const barHeight = ratio * maxHeight;
-
+    
     requestAnimationFrame(() => {
       bar.style.height = barHeight + 'px';
     });
@@ -250,7 +250,7 @@ function pintarBarrasVerticales(containerId, items, formatValue) {
     const label = document.createElement('div');
     label.className = 'v-bar-label';
     label.textContent = it.etiqueta;
-
+    
     bar.appendChild(val);
     col.appendChild(bar);
     col.appendChild(label);
@@ -271,11 +271,11 @@ function pintarAvancePequeño(id, valor) {
   ring.style.setProperty('--fill-color', color);
   const step = () => {
     const diff = target - cur;
-    if (diff < 0.1) {
+    if (diff < 0.1) { 
       cur = target;
       ring.style.setProperty('--value', target);
       txt.textContent = `${target.toFixed(1)}%`;
-      return;
+      return; 
     }
 
     const increment = Math.max(0.1, diff / 8);
@@ -322,7 +322,7 @@ function canEditProgress() {
 
 // --- Generic SPA + API helpers ----------------------------------------------
 const API = "http://127.0.0.1:8000";
-try { window.API = API; } catch { }
+try {window.API = API;} catch {} 
 const $view = document.getElementById('view');
 const $title = document.getElementById('pageTitle');
 
@@ -560,7 +560,7 @@ document.addEventListener('click', (e) => {
 async function getPlansByDimension(dimensionValue) {
   if (plansCache.has(dimensionValue)) return plansCache.get(dimensionValue);
   const res = await apiFetch(`/plans?dimension=${encodeURIComponent(dimensionValue)}`);
-
+  
   const list = await res.json();
   const groups = new Map();
   for (const p of list) {
@@ -617,27 +617,27 @@ async function showDashboard() {
 
   const statsPromise = apiFetch('/stats/totals');
   const objectivesPromise = apiFetch('/objectives?limit=500');
-  const plansPromise = apiFetch('/plans?limit=500');
+  const plansPromise = apiFetch('/plans?limit=500'); 
   const resourcesPromise = apiFetch('/stats/resources-by-dimension');
   const [statsRes, objectivesRes, plansRes, resourcesRes] = await Promise.all([
-    statsPromise,
-    objectivesPromise,
-    plansPromise,
+    statsPromise, 
+    objectivesPromise, 
+    plansPromise, 
     resourcesPromise
-  ]);
+  ]); 
   const stats = await statsRes.json();
   const objectives = await objectivesRes.json();
   const plans = await plansRes.json();
   const resourcesRaw = await resourcesRes.json();
-  stats.total_objetivos = objectives.length;
+  stats.total_objetivos = objectives.length; 
 
   //Stats
   pintarStatsGlobales(stats);
-
+  
   //Donut 
   const agrupado = {};
   ORDEN_DIMENSIONES.forEach(dim => {
-    agrupado[dim] = { sumaAvance: 0, cantidad: 0 };
+      agrupado[dim] = { sumaAvance: 0, cantidad: 0 };
   });
   objectives.forEach(obj => {
     const dim = tituloDimension(obj.dimension);
@@ -651,7 +651,7 @@ async function showDashboard() {
   const avanceData = Object.entries(agrupado).map(([dim, datos]) => {
     const promedio = datos.cantidad > 0 ? (datos.sumaAvance / datos.cantidad) : 0;
     totalPromedio += promedio;
-    return {
+    return{
       etiqueta: dim,
       valor: promedio
     };
@@ -659,7 +659,7 @@ async function showDashboard() {
 
   avanceData.forEach(item => {
     item.percent = totalPromedio > 0 ? (item.valor / totalPromedio) * 100 : 0;
-  });
+  }); 
   const avanceOrdenado = ordenarDatosPorDimension(avanceData);
   pintarDonutDimension('donutDimensionContainer', avanceOrdenado);
 
@@ -677,14 +677,14 @@ async function showDashboard() {
       planesCounts[etiqueta]++;
     }
   });
-
+  
   const planesData = Object.entries(planesCounts).map(([etiqueta, valor]) => ({
     etiqueta,
     valor
   }));
   const planesOrdenado = ordenarDatosPorDimension(planesData);
   pintarBarrasVerticales('objetivosBars', planesOrdenado, (v) => v.toString());
-
+  
   //Recursos
   const recursosCounts = {
     'Liderazgo': 0,
@@ -695,15 +695,15 @@ async function showDashboard() {
 
   resourcesRaw.forEach(item => {
     const etiqueta = tituloDimension(item.dimension);
-    if (recursosCounts.hasOwnProperty(etiqueta)) {
+    if (recursosCounts.hasOwnProperty(etiqueta)){
       recursosCounts[etiqueta] = item.total;
     }
   });
-  const recursosData = Object.entries(recursosCounts).map(([etiqueta, valor]) => ({
+  const recursosData = Object.entries(recursosCounts).map(([etiqueta,valor]) => ({
     etiqueta,
     valor
   }));
-  pintarBarrasHorizontales('recursosBars', ordenarDatosPorDimension(recursosData), formatoMoneda);
+  pintarBarrasHorizontales('recursosBars', ordenarDatosPorDimension(recursosData), formatoMoneda); 
 
 }
 /** Form de planes (solo editores). */
@@ -741,7 +741,7 @@ async function showPlanList(dimensionValue) {
 
   const progressMap = new Map();
   const idMap = new Map();
-  for (const obj of objetives) {
+  for(const obj of objetives){
     progressMap.set(obj.name, obj.average_progress_pct);
     idMap.set(obj.name, obj.id);
   }
@@ -785,15 +785,15 @@ async function showPlanList(dimensionValue) {
   $list.innerHTML = html;
 
   orden.forEach(([objetivoNombre, items], index) => {
-    const elementId = `obj-${index + 1}`;
+    const elementId = `obj-${index + 1}`; 
     const realAvgPct = progressMap.get(objetivoNombre) ?? 0;
     const isRealData = progressMap.has(objetivoNombre);
-    const finalPct = isRealData ? realAvgPct : 0;
+    const finalPct = isRealData ? realAvgPct : 0; 
     const sanitizedPct = Math.max(0, Math.min(100, finalPct));
     pintarAvancePequeño(elementId, sanitizedPct);
   });
 
-  $list.addEventListener('click', async (ev) => {
+$list.addEventListener('click', async (ev) => {
     const btn = ev.target.closest('button[data-act]');
     if (!btn) return;
     const objetivo = decodeURIComponent(btn.dataset.obj || '');
@@ -805,26 +805,26 @@ async function showPlanList(dimensionValue) {
         const { groups } = await getPlansByDimension(dimensionValue);
         const planesAEliminar = groups.get(objetivo) || [];
         let errores = 0;
-
+        
         for (const plan of planesAEliminar) {
-          try {
-            const res = await apiFetch(`/plans/${plan.id}`, { method: 'DELETE' });
-            if (!res.ok) errores++;
-          } catch (e) {
-            console.error(e);
-            errores++;
-          }
+            try {
+              const res = await apiFetch(`/plans/${plan.id}`, { method: 'DELETE' }); 
+              if (!res.ok) errores++;
+            } catch (e) {
+              console.error(e);
+              errores++;
+            }
         }
 
         const objectiveId = idMap.get(objetivo);
         if (objectiveId) {
-          try {
-            console.log(`Eliminando objetivo padre ID: ${objectiveId}`);
-            await apiFetch(`/objectives/${objectiveId}`, { method: 'DELETE' });
-          } catch (e) {
-            console.error("Error al eliminar el objetivo padre:", e);
-            errores++;
-          }
+            try {
+                console.log(`Eliminando objetivo padre ID: ${objectiveId}`);
+                await apiFetch(`/objectives/${objectiveId}`, { method: 'DELETE' });
+            } catch (e) {
+                console.error("Error al eliminar el objetivo padre:", e);
+                errores++;
+            }
         }
 
         if (errores === 0) {
@@ -832,7 +832,7 @@ async function showPlanList(dimensionValue) {
         } else {
           alert(`Proceso finalizado, pero ocurrieron algunos errores al eliminar partes del contenido.`);
         }
-
+        
         window.invalidatePlansCache(dimensionValue);
         showPlanList(dimensionValue);
       }
@@ -849,8 +849,8 @@ async function showPlanList(dimensionValue) {
 
   document.getElementById('btnRefrescar')?.addEventListener('click', () => {
     if (typeof plansCache !== 'undefined') {
-      plansCache.delete(dimensionValue);
-      console.log(`Caché de ${dimensionValue} eliminada. Forzando recarga.`);
+        plansCache.delete(dimensionValue);
+        console.log(`Caché de ${dimensionValue} eliminada. Forzando recarga.`);
     }
     showPlanList(dimensionValue);
   });
@@ -865,7 +865,7 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
   items.forEach(item => {
     const startYear = new Date(item.fecha_inicio).getUTCFullYear();
     const endYear = new Date(item.fecha_termino).getUTCFullYear();
-
+    
     if (!isNaN(startYear) && startYear < minYear) minYear = startYear;
     if (!isNaN(endYear) && endYear > maxYear) maxYear = endYear;
   });
@@ -894,26 +894,26 @@ async function showObjectiveDetail(dimensionValue, objetivo) {
       filteredItems = filteredItems.filter(item => {
         const start = new Date(item.fecha_inicio);
         const end = new Date(item.fecha_termino);
-
+        
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-          return false;
+          return false; 
         }
-
+        
         const startYear = start.getUTCFullYear();
         const endYear = end.getUTCFullYear();
-
+        
         return selectedYear >= startYear && selectedYear <= endYear;
       });
     }
 
-    const [key, direction] = sortValue.split('-');
+    const [key, direction] = sortValue.split('-'); 
     filteredItems.sort((a, b) => {
       let dateA, dateB;
       if (key === 'fecha') {
         dateA = toTimestamp(a.fecha_inicio);
         dateB = toTimestamp(b.fecha_inicio);
-      }
-      else if (key === 'fecha-fin') {
+      } 
+      else if (key === 'fecha-fin') { 
         dateA = toTimestamp(a.fecha_termino);
         dateB = toTimestamp(b.fecha_termino);
       }
@@ -1188,9 +1188,9 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
           .catch(() => [])
       );
       const planEvsArrays = await Promise.all(planFetches);
-
+      
       const all = planEvsArrays.flat()
-        .sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+                    .sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
 
       if (!all.length) {
         tb.innerHTML = `<tr><td colspan="5">Sin evidencias aún.</td></tr>`;
@@ -1227,42 +1227,42 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
     document.getElementById('btnUpload').addEventListener('click', async () => {
       const inp = document.getElementById('fileInput');
       const desc = (document.getElementById('fileDesc').value || '').trim();
-      const sel = document.getElementById('selAction').value;
-
+      const sel = document.getElementById('selAction').value; 
+      
       if (!inp.files || !inp.files.length) {
         alert('Selecciona uno o más archivos primero.');
         return;
       }
       if (!sel) {
-        alert('Error: No se ha seleccionado ninguna acción.');
-        return;
+          alert('Error: No se ha seleccionado ninguna acción.');
+          return;
       }
-
+      
       for (const file of inp.files) {
         const fd = new FormData();
         fd.append('file', file);
         if (desc) fd.append('description', desc);
-
+        
         const url = `${API}/plans/${sel}/evidences`;
-
+        
         try {
           const resp = await fetch(url, {
             method: 'POST',
             headers: { ...authHeaders() },
             body: fd
           });
-
+          
           if (!resp.ok) {
             const text = await resp.text().catch(() => '');
             alert(`No se pudo subir "${file.name}": HTTP ${resp.status}\n${text || 'sin mensaje del servidor'}`);
             return;
           }
         } catch (err) {
-          console.warn('Fallo la petición de subida (pero puede haber funcionado):', err);
-          return;
-        }
+        console.warn('Fallo la petición de subida (pero puede haber funcionado):', err);
+        return;
       }
-
+      }
+      
       inp.value = '';
       document.getElementById('fileDesc').value = '';
       await refreshList();
@@ -1272,11 +1272,11 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
   document.getElementById('tbFiles').addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act="delete-evidence"]');
     if (!btn || !isEditor()) return;
-
+    
     const id = btn.dataset.id;
     const confirmed = await showConfirmationDialog('¿Estás seguro de querer eliminar esta evidencia? Esta acción no se puede deshacer.');
     if (!confirmed) return;
-
+    
     try {
       const res = await fetch(`${API}/evidences/${id}`, {
         method: 'DELETE',
@@ -1287,14 +1287,15 @@ async function showEvidenceUpload(dimensionValue, objetivo) {
         alert(`Error: No se pudo eliminar la evidencia (Estado: ${res.status})`);
         return;
       }
-      await refreshList();
-    } catch (err) {
+      await refreshList(); 
+      } catch (err) {
       console.warn('Fallo la petición de borrado (pero puede haber funcionado):', err);
     }
   });
 
   refreshList();
 }
+
 
 
 // --- View: Resources by objective ------------------------------------------
@@ -1410,7 +1411,7 @@ async function showObjectiveResources(dimensionValue, objetivo) {
   document.querySelectorAll('.btn-swipe').forEach(b => {
     b.addEventListener('click', () => {
       const step = 420;
-      const dir = Number(b.dataset.dir);
+      const dir  = Number(b.dataset.dir);
       wrap.scrollBy({ left: step * dir, behavior: 'smooth' });
     });
   });
@@ -1424,13 +1425,13 @@ async function showObjectiveResources(dimensionValue, objetivo) {
 
 // ----------- Funcion que asegura el refresco para la logica mas "pesada"----------------
 function debounce(func, timeout = 300) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      func.apply(this, args);
-    }, timeout);
-  };
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            func.apply(this, args);
+        }, timeout);
+    };
 }
 
 // --- View: Indicators for a goal -------------------------------------------
@@ -1457,7 +1458,7 @@ async function showIndicatorsForGoal(goalId) {
 
     $tb.innerHTML = indics.map((x, idx) => {
       const kind = classifyUnit(x.unit);
-
+      
       let avancePct = 0;
       if (kind === 'percent' || kind === 'count') {
         const total = x.progress_total;
@@ -1499,8 +1500,8 @@ async function showIndicatorsForGoal(goalId) {
           <td colspan="6">
             <div class="prog-box">
               ${(() => {
-          if (kind === 'percent') {
-            return ` 
+                if (kind === 'percent') {
+                  return ` 
                     <div class="prog-grid">
                       <label>Cantidad total
                         <input type="number" min="0" step="1" class="inp prog-total" data-id="${x.id}" placeholder="Ej: 100" value="${x.progress_total ?? ''}" ${!canEditProgress() ? 'disabled' : ''}>
@@ -1513,8 +1514,8 @@ async function showIndicatorsForGoal(goalId) {
                       </div>
                     </div>
                    `;
-          } else if (kind === 'count') {
-            return `
+                } else if (kind === 'count') {
+                  return `
                     <div class="prog-grid">
                       <label>Cantidad total
                        <input type="number" min="0" step="1" class="inp prog-total" data-id="${x.id}" placeholder="Ej: 4" value="${x.progress_total ?? ''}" ${!canEditProgress() ? 'disabled' : ''}>
@@ -1527,8 +1528,8 @@ async function showIndicatorsForGoal(goalId) {
                       </div>
                     </div>
                   `;
-          } else {
-            return `
+                } else {
+                  return `
                      <div class="prog-grid">
                       <label>Valor actual
                         <input type="text" class="inp prog-free" data-id="${x.id}" placeholder="Ej: 3.5 pts" value="${x.progress_free ?? ''}" ${!canEditProgress() ? 'disabled' : ''}>
@@ -1538,25 +1539,25 @@ async function showIndicatorsForGoal(goalId) {
                       </div>
                     </div>
                   `;
-          }
-        })()}
+                }
+               })()}
             </div>
           </td>
         </tr>
        `;
     }).join('');
 
-
-    if (progresses.length > 0) {
+    
+    if(progresses.length > 0){
       const totalProgress = progresses.reduce((sum, pct) => sum + pct, 0);
       const averageProgress = totalProgress / progresses.length;
       console.log(`Promedio de avance del objetivo (Meta ${goalId}): ${averageProgress.toFixed(1)}%`);
     }
-
+    
     // Restore locally-saved progress inputs per indicator id.
     indics.forEach(x => {
       const kind = classifyUnit(x.unit);
-      if (x.progress_total || x.progress_free) {
+      if (x.progress_total || x.progress_free){
         computeAndRenderProgress(x.id, kind);
       }
     });
@@ -1579,20 +1580,20 @@ async function showIndicatorsForGoal(goalId) {
       const $t = document.querySelector(`.prog-total[data-id="${id}"]`);
       const $o = document.querySelector(`.prog-obt[data-id="${id}"]`);
       const total = Number($t?.value ?? 0);
-      const obt = Number($o?.value ?? 0);
-      if (total > 0 && obt >= 0) {
+      const obt   = Number($o?.value ?? 0);
+      if (total > 0 && obt >= 0){
         const pctRaw = (obt / total) * 100;
         const pct = Math.max(0, Math.min(100, pctRaw));
-        dataToSave = { progress_total: total, progress_obtained: obt };
+        dataToSave = { progress_total: total, progress_obtained: obt};
 
-        if (kind === 'percent') {
+        if (kind === 'percent'){
           $out.innerHTML = `<span class="badge">%</span> <strong>Resultado:</strong> ${pct.toFixed(1)} %`;
         }
         else {
-          $out.innerHTML = `<span class="badge">n°</span> <strong>Resultado:</strong> ${obt}/${total} (${pct.toFixed(1)} %)`;
+          $out.innerHTML = `<span class="badge">n°</span> <strong>Resultado:</strong> ${obt}/${total} (${pct.toFixed(1)} %)`; 
         }
       }
-      else {
+      else{
         $out.innerHTML = `<span class="badge">${kind === 'percent' ? '%' : 'n°'}</span> <strong>Resultado:</strong> —`;
       }
     }
@@ -1601,10 +1602,10 @@ async function showIndicatorsForGoal(goalId) {
       const $f = document.querySelector(`.prog-free[data-id="${id}"]`);
       const v = ($f?.value ?? '').trim();
       $out.innerHTML = `<span class="badge">•</span> <strong>Resultado:</strong> ${v || '—'}`;
-      dataToSave = { progress_free: v || '' };
+      dataToSave = {progress_free: v || ''};
     }
 
-    if (Object.keys(dataToSave).length > 0) {
+    if (Object.keys(dataToSave).length > 0){
       await apiUpdateIndicatorProgress(id, dataToSave);
     }
   }
@@ -1702,33 +1703,33 @@ async function showIndicatorsForGoal(goalId) {
 
   async function apiUpdateIndicatorProgress(indicatorId, data) {
     const res = await fetch(`${API}/indicators/${indicatorId}/progress`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders()
-      },
-      body: JSON.stringify(data)
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            ...authHeaders() 
+        },
+        body: JSON.stringify(data)
     });
     if (!res.ok) {
-      throw new Error('No se pudo actualizar el progreso del indicador.');
+        throw new Error('No se pudo actualizar el progreso del indicador.');
     }
   }
 
-  async function handleProgressInput(id, kind) {
-    await computeAndRenderProgress(id, kind);
-    const progRow = document.querySelector(`tr.prog-row[data-for="${id}"]`);
-    const wasOpen = progRow?.style.display !== 'none';
+    async function handleProgressInput(id, kind) {
+        await computeAndRenderProgress(id, kind); 
+        const progRow = document.querySelector(`tr.prog-row[data-for="${id}"]`);
+        const wasOpen = progRow?.style.display !== 'none';
 
-    indicators = await apiListIndicatorsByGoal(goalId).catch(() => []);
+        indicators = await apiListIndicatorsByGoal(goalId).catch(() => []); 
 
-    paintTable(indicators);
-    if (wasOpen) {
-      const newProgRow = document.querySelector(`tr.prog-row[data-for="${id}"]`);
-      if (newProgRow) {
-        newProgRow.style.display = '';
-      }
+        paintTable(indicators);
+        if (wasOpen) {
+            const newProgRow = document.querySelector(`tr.prog-row[data-for="${id}"]`);
+            if (newProgRow) {
+                newProgRow.style.display = '';
+            }
+        }
     }
-  }
 
   // Table actions: toggle progress panel / delete indicator
   $tb.addEventListener('click', async (e) => {
@@ -1740,13 +1741,13 @@ async function showIndicatorsForGoal(goalId) {
     if (btn.dataset.act === 'prog') {
       const row = document.querySelector(`tr.prog-row[data-for="${id}"]`);
       if (!row) return;
-      row.style.display = row.style.display === 'none' ? '' : 'none';
+        row.style.display = row.style.display === 'none' ? '' : 'none';
       return;
     }
-
+    
     if (btn.dataset.act === 'del') {
       if (!confirm('¿Eliminar este indicador?')) return;
-      const res = await fetch(`${API}/indicators/${id}`, { method: 'DELETE', headers: { ...authHeaders() } });
+      const res = await fetch(`${API}/indicators/${id}`, { method:'DELETE', headers: { ...authHeaders() }});
       if (!res.ok) { alert('No se pudo eliminar.'); return; }
       indicators = await apiListIndicatorsByGoal(goalId).catch(() => []);
       paintTable(indicators);
@@ -1760,23 +1761,23 @@ async function showIndicatorsForGoal(goalId) {
   $tb.addEventListener('input', (e) => {
     const inp = e.target;
     if (!inp.classList.contains('prog-total') && !inp.classList.contains('prog-obt') && !inp.classList.contains('prog-free')) {
-      return;
+        return;
     }
-
+    
     const id = inp?.dataset?.id;
     if (!id) return;
     const hostRow = document.querySelector(`tr[data-id="${id}"]`);
     const kind = hostRow?.dataset.kind;
 
     debouncedProgressInput(id, kind);
-  });
+});
 }
 
 
 // --- View: carga dinamica de "Reportes" ------------------------------------
 async function showReportes() {
   await loadScriptOnce('js/report.js');
-
+  
   if (window.showReportesView) {
     window.showReportesView($view, $title, esc);
   } else {
@@ -1836,10 +1837,10 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
   const objectiveId = objective.id;
 
   const startY = Number(objective.start_year) || new Date().getUTCFullYear();
-  const endY = Number(objective.end_year) || (startY + 3);
-  const years = [];
+  const endY   = Number(objective.end_year)   || (startY + 3);
+  const years  = [];
   for (let y = startY; y <= endY; y++) years.push(y);
-  const yearOptions = years.map(y => `<option value="${y}" ${y === new Date().getUTCFullYear() ? 'selected' : ''}>${y}</option>`).join('');
+  const yearOptions = years.map(y => `<option value="${y}" ${y===new Date().getUTCFullYear()?'selected':''}>${y}</option>`).join('');
 
   $title.textContent = `${tituloDimension(dimensionValue)} — Metas Estratégicas`;
   $view.innerHTML = `
@@ -1923,30 +1924,30 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
   await refreshTable();
 
   /** Create a new goal for the objective, then refresh the table. */
-  let savingGoal = false;
-  document.getElementById('btnAgregarFila')?.addEventListener('click', async () => {
-    if (savingGoal) return;
-    savingGoal = true;
-    const btn = document.getElementById('btnAgregarFila');
-    btn.disabled = true;
+let savingGoal = false;
+document.getElementById('btnAgregarFila')?.addEventListener('click', async () => {
+  if (savingGoal) return; 
+  savingGoal = true;
+  const btn = document.getElementById('btnAgregarFila');
+  btn.disabled = true;
 
-    try {
-      const meta = document.getElementById('inpMeta').value.trim();
-      const periodo = document.getElementById('inpEstrategiaPeriodo').value.trim();
-      const year = Number(document.getElementById('selAnio').value);
-      if (!meta || !periodo) { alert('Completa Meta y Estrategia del Periodo.'); return; }
+  try {
+    const meta    = document.getElementById('inpMeta').value.trim();
+    const periodo = document.getElementById('inpEstrategiaPeriodo').value.trim();
+    const year    = Number(document.getElementById('selAnio').value);
+    if (!meta || !periodo) { alert('Completa Meta y Estrategia del Periodo.'); return; }
 
-      await apiCreateGoal(objectiveId, { title: meta, description: periodo, year });
-      document.getElementById('inpMeta').value = '';
-      document.getElementById('inpEstrategiaPeriodo').value = '';
-      await refreshTable();
-    } catch (e) {
-      alert('No se pudo crear la meta.');
-    } finally {
-      savingGoal = false;
-      btn.disabled = false;
-    }
-  });
+    await apiCreateGoal(objectiveId, { title: meta, description: periodo, year });
+    document.getElementById('inpMeta').value = '';
+    document.getElementById('inpEstrategiaPeriodo').value = '';
+    await refreshTable();
+  } catch (e) {
+    alert('No se pudo crear la meta.');
+  } finally {
+    savingGoal = false;
+    btn.disabled = false;
+  }
+});
 
 
   /**
@@ -1969,7 +1970,7 @@ async function showStrategicGoalsEditor(dimensionValue, objetivo) {
     if (btn.dataset.act === 'del') {
       const goalId = btn.dataset.goal;
       if (!confirm('¿Eliminar esta meta? (si tiene indicadores, elimínalos primero)')) return;
-      const res = await fetch(`${API}/goals/${goalId}`, { method: 'DELETE', headers: { ...authHeaders() } });
+      const res = await fetch(`${API}/goals/${goalId}`, { method:'DELETE', headers: { ...authHeaders() }});
       if (!res.ok) { alert('No se pudo eliminar la meta.'); return; }
       await refreshTable();
       return;
@@ -1986,37 +1987,37 @@ async function router() {
   try {
     const hash = location.hash || '#/dashboard';
     setActiveByHash(hash);
-    const mGoal = hash.match(/^#\/indicadores\/goal\/([^/]+)$/);
+    const mGoal  = hash.match(/^#\/indicadores\/goal\/([^/]+)$/);
     const mEvi = hash.match(/^#\/evidencias\/([^/]+)\/(.+)$/);
 
-    if (mEvi) {
-      await showEvidenceUpload(decodeURIComponent(mEvi[1]), decodeURIComponent(mEvi[2]));
-      return;
+    if (mEvi) { 
+      await showEvidenceUpload(decodeURIComponent(mEvi[1]), decodeURIComponent(mEvi[2])); 
+      return; 
     }
 
-    if (mGoal) { await showIndicatorsForGoal(decodeURIComponent(mGoal[1])); return; }
+    if (mGoal)   { await showIndicatorsForGoal(decodeURIComponent(mGoal[1])); return; }
 
     const mMetas = hash.match(/^#\/metas\/([^/]+)\/(.+)$/);
-    if (mMetas) { await showStrategicGoalsEditor(decodeURIComponent(mMetas[1]), decodeURIComponent(mMetas[2])); return; }
+    if (mMetas)  { await showStrategicGoalsEditor(decodeURIComponent(mMetas[1]), decodeURIComponent(mMetas[2])); return; }
 
-    if (hash === '#/dashboard') return await showDashboard(); // CAMBIO: 'await'
-    if (hash === '#/reportes') return await showReportes();
-    if (hash === '#/planes/form') return isEditor() ? await showPlanForm() : showForbidden('Solo los editores pueden crear/editar planes.');
-    if (hash === '#/planes/liderazgo') return await showPlanList('LIDERAZGO');
-    if (hash === '#/planes/gestion') return await showPlanList('GESTION_PEDAGOGICA');
+    if (hash === '#/dashboard')          return await showDashboard(); // CAMBIO: 'await'
+    if (hash === '#/reportes')           return await showReportes();
+    if (hash === '#/planes/form')        return isEditor() ? await showPlanForm() : showForbidden('Solo los editores pueden crear/editar planes.');
+    if (hash === '#/planes/liderazgo')   return await showPlanList('LIDERAZGO');
+    if (hash === '#/planes/gestion')     return await showPlanList('GESTION_PEDAGOGICA');
     if (hash === '#/planes/convivencia') return await showPlanList('CONVIVENCIA_ESCOLAR');
-    if (hash === '#/planes/recursos') return await showPlanList('GESTION_RECURSOS');
+    if (hash === '#/planes/recursos')    return await showPlanList('GESTION_RECURSOS');
 
-    return await showDashboard();
+    return await showDashboard(); 
   } catch (e) {
-    // Si algo falla (ej. 401 de apiFetch)
-    console.error("Error en el router:", e);
-    if (e.message.includes("401")) {
-      // apiFetch ya redirigió, no hagas nada
-    } else {
-      $title.textContent = "Error";
-      $view.innerHTML = `<p>Ocurrió un error al cargar la vista: ${e.message}</p>`;
-    }
+      // Si algo falla (ej. 401 de apiFetch)
+      console.error("Error en el router:", e);
+      if (e.message.includes("401")) {
+        // apiFetch ya redirigió, no hagas nada
+      } else {
+        $title.textContent = "Error";
+        $view.innerHTML = `<p>Ocurrió un error al cargar la vista: ${e.message}</p>`;
+      }
   } finally {
     __routing = false;
   }
@@ -2027,7 +2028,7 @@ window.addEventListener('hashchange', router);
 window.addEventListener('DOMContentLoaded', () => {
   const liForm = document.querySelector('#nav-plan-form')?.closest('.nav__item, li, a');
   if (liForm && !isEditor()) liForm.style.display = 'none';
-  router();
+  router(); 
 });
 window.addEventListener('DOMContentLoaded', setupAccordionTransition);
 
@@ -2041,47 +2042,4 @@ document.querySelectorAll('.nav__details').forEach(d => {
   d.addEventListener('toggle', () => {
     if (d.open) document.querySelectorAll('.nav__details').forEach(o => { if (o !== d) o.open = false; });
   });
-});
-
-// Reemplaza el enlace de descarga en la tabla por un botón (en la plantilla donde generas las filas):
-// antes: <a class="btn btn--sm" href="${API}${ev.download_url}" target="_blank" rel="noopener">Descargar</a>
-// ahora:
-<td><button class="btn btn--sm" data-download="${API}${ev.download_url}" data-fn="${esc(ev.original_filename || ev.filename)}">Descargar</button></td>
-
-
-async function downloadUrl(url, filename) {
-  try {
-    const res = await fetch(url, { method: 'GET', headers: { ...authHeaders() } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    const a = document.createElement('a');
-    const objectUrl = URL.createObjectURL(blob);
-    a.href = objectUrl;
-    a.download = filename || 'download';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // liberar memoria unos segundos después
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
-  } catch (err) {
-    console.error('downloadUrl error', err);
-    throw err;
-  }
-}
-
-// Delegación global para botones de descarga
-document.addEventListener('click', async (ev) => {
-  const btn = ev.target.closest('button[data-download]');
-  if (!btn) return;
-  ev.preventDefault();
-  const url = btn.dataset.download;
-  const filename = btn.dataset.fn || 'archivo';
-  btn.disabled = true;
-  try {
-    await downloadUrl(url, filename);
-  } catch (err) {
-    alert('No se pudo descargar el archivo. Revisa la consola.');
-  } finally {
-    btn.disabled = false;
-  }
 });

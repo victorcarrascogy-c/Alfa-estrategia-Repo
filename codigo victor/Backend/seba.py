@@ -12,8 +12,12 @@ import uuid
 import re
 from enum import Enum
 from pydantic import BaseModel, field_validator, Field
-from starlette.responses import FileResponse, StreamingResponse
+from starlette.responses import FileResponse
+from starlette.responses import StreamingResponse
 import requests
+import requests.utils
+
+
 
 from sqlalchemy import (
     create_engine, Column, Integer, String, Text, ForeignKey, DateTime, select,
@@ -43,15 +47,15 @@ pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 print(pwd.hash("clave1234"))
 
 def verify_password(plain: str, password_hash: str) -> bool:
-    """Check a plaintext password against a bcrypt hash."""
+    """Verifica una contraseña de texto plano contra un hash de bcrypt."""
     return pwd_context.verify(plain, password_hash)
 
 def get_password_hash(password: str) -> str:
-    """Generate a bcrypt hash for a password."""
+    """Genera un hash bcrypt para una contraseña."""
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
-    """Issue a short-lived JWT embedding the payload and an exp claim."""
+    """Emite un JWT de corta duración incrustando la carga útil y un 'exp' claim."""
     to_encode = data.copy()
     to_encode["exp"] = datetime.utcnow() + timedelta(minutes=minutes)
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -59,7 +63,7 @@ def create_access_token(data: dict, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) 
 Base = declarative_base()
 app = FastAPI(title="Strategic Plan API (DB-backed)")
 
-# Allow browser apps to call the API during local development
+# Permite que las aplicaciones de navegador llamen a la API durante el desarrollo local
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -70,7 +74,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    """Create DB tables and ensure upload folder exists on startup."""
+    """Crea las tablas de la DB y asegura que la carpeta de subida exista al inicio."""
     Base.metadata.create_all(bind=engine)
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -104,7 +108,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def get_db() -> Generator[Session, None, None]:
-    """FastAPI dependency that yields a SQLAlchemy session with commit/rollback."""
+    """Dependencia de FastAPI que produce una sesión de SQLAlchemy con commit/rollback."""
     db = SessionLocal()
     try:
         yield db
@@ -119,8 +123,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> "UserModel":
     """
-    (Dependency) Decode JWT, load the user, and ensure the account is active.
-    Raises 401 HTTPException if invalid.
+    (Dependencia) Decodifica JWT, carga el usuario y asegura que la cuenta esté activa.
+    Lanza HTTPException 401 si es inválido.
     """
     cred_exc = HTTPException(status_code=401, detail="No autorizado")
     try:
@@ -137,8 +141,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 def require_role(*roles: str):
     """
-    (Dependency Factory) Restricts a route to specific user roles.
-    Raises 403 HTTPException if the user role is not allowed.
+    (Factoría de Dependencia) Restringe una ruta a roles de usuario específicos.
+    Lanza HTTPException 403 si el rol de usuario no está permitido.
     """
     def _dep(user: "UserModel" = Depends(get_current_user)) -> "UserModel":
         if user.role not in roles:
@@ -147,11 +151,11 @@ def require_role(*roles: str):
     return _dep
 
 # ----------------------------
-# Helpers and validators
+# Helpers y validadores
 # ----------------------------
 
 def _dv_mod11(num: str) -> str:
-    """Compute Chilean RUT check digit using mod-11."""
+    """Calcula el dígito verificador del RUT chileno usando mod-11."""
     serie = [2,3,4,5,6,7]
     s, i = 0, 0
     for d in reversed(num):
@@ -163,7 +167,7 @@ def _dv_mod11(num: str) -> str:
     return str(resto)
 
 def normalize_rut(rut: str) -> str:
-    """Normalize and validate a RUT; return digits+DV without separators."""
+    """Normaliza y valida un RUT; retorna dígitos+DV sin separadores."""
     s = re.sub(r"[^0-9kK]", "", rut or "")
     if len(s) < 2:
         raise HTTPException(status_code=400, detail="RUT inválido")
@@ -175,7 +179,7 @@ def normalize_rut(rut: str) -> str:
     return cuerpo + dv
 
 def asdict(model: BaseModel) -> dict:
-    """Compatible way to turn Pydantic v1/v2 models into dicts."""
+    """Manera compatible de convertir modelos Pydantic v1/v2 a diccionarios."""
     if hasattr(model, "model_dump"):
         return model.model_dump()
     return model.dict()
@@ -198,11 +202,11 @@ MAX_UPLOAD_BYTES = 50 * 1024 * 1024 # 50 MB
 COPY_CHUNK_SIZE = 1024 * 1024 # 1 MB
 
 # ----------------------------
-# Pydantic schemas (request/response)
+# Esquemas Pydantic (solicitud/respuesta)
 # ----------------------------
 
 class ObjectiveCreate(BaseModel):
-    """Payload for creating a new Objective."""
+    """Carga útil para crear un nuevo Objetivo."""
     name: str
     dimension: str
     description: Optional[str] = None
@@ -213,7 +217,7 @@ class ObjectiveCreate(BaseModel):
     @classmethod
     def _reasonable_year(cls, v: int):
         if v < MIN_YEAR or v > MAX_YEAR:
-            raise ValueError(f"year must be between {MIN_YEAR} and {MAX_YEAR}")
+            raise ValueError(f"El año debe estar entre {MIN_YEAR} y {MAX_YEAR}")
         return v
 
     @field_validator("end_year")
@@ -221,16 +225,16 @@ class ObjectiveCreate(BaseModel):
     def _end_after_start(cls, v: int, info):
         if start := info.data.get("start_year"):
             if v < start:
-                raise ValueError("end_year must be >= start_year")
+                raise ValueError("end_year debe ser >= start_year")
         return v
 
 class Objective(ObjectiveCreate):
-    """Public representation of an Objective, including its ID and progress."""
+    """Representación pública de un Objetivo, incluyendo su ID y progreso."""
     id: int
     average_progress_pct: Optional[float] = None
 
 class GoalCreate(BaseModel):
-    """Payload for creating a new Goal."""
+    """Carga útil para crear una nueva Meta."""
     title: str
     description: Optional[str] = None
     year: int
@@ -239,16 +243,16 @@ class GoalCreate(BaseModel):
     @classmethod
     def _reasonable_year(cls, v: int):
         if v < MIN_YEAR or v > MAX_YEAR:
-            raise ValueError(f"year must be between {MIN_YEAR} and {MAX_YEAR}")
+            raise ValueError(f"El año debe estar entre {MIN_YEAR} y {MAX_YEAR}")
         return v
 
 class Goal(GoalCreate):
-    """Public representation of a Goal, including its ID."""
+    """Representación pública de una Meta, incluyendo su ID."""
     id: int
     objective_id: int
 
 class IndicatorCreate(BaseModel):
-    """Payload for creating a new Indicator."""
+    """Carga útil para crear un nuevo Indicador."""
     title: str
     target: Optional[str] = None
     unit: Optional[str] = None
@@ -257,17 +261,17 @@ class IndicatorCreate(BaseModel):
     progress_free: Optional[str] = None
 
 class Indicator(IndicatorCreate):
-    """Public representation of an Indicator, including its ID."""
+    """Representación pública de un Indicador, incluyendo su ID."""
     id: int
     goal_id: int
     progress_total: Optional[float] = None
     progress_obtained: Optional[float] = None
     progress_free: Optional[str] = None
     class Config:
-        orm_mode = True # Use from_attributes = True for Pydantic v2
+        orm_mode = True # Usar from_attributes = True para Pydantic v2
 
 class IndicatorProgressUpdate(BaseModel):
-    """Payload for updating an Indicator's progress."""
+    """Carga útil para actualizar el progreso de un Indicador."""
     progress_total: Optional[float] = Field(None, ge=0)
     progress_obtained: Optional[float] = Field(None, ge=0)
     progress_free: Optional[str] = None
@@ -294,20 +298,20 @@ class ObjectiveEvidenceOut(BaseModel):
     download_url: str
 
 class DimensionEnum(str, Enum):
-    """Enum for the four main dimensions of the strategic plan."""
+    """Enum para las cuatro dimensiones principales del plan estratégico."""
     LIDERAZGO = "LIDERAZGO"
     GESTION_PEDAGOGICA = "GESTION_PEDAGOGICA"
     CONVIVENCIA_ESCOLAR = "CONVIVENCIA_ESCOLAR"
     GESTION_RECURSOS = "GESTION_RECURSOS"
 
 class RoleEnum(str, Enum):
-    """Enum for user roles."""
+    """Enum para los roles de usuario."""
     editor = "editor"
     viewer = "viewer"
     progress_editor = "progress_editor"
 
 class StrategicPlanCreate(BaseModel):
-    """Payload for creating a Strategic Plan (Action)."""
+    """Carga útil para crear un Plan Estratégico (Acción)."""
     dimension: DimensionEnum
     colegio: str
     objetivo_estrategico: str
@@ -329,7 +333,7 @@ class StrategicPlanCreate(BaseModel):
         return v
 
 class StrategicResourceCreate(BaseModel):
-    """Payload for creating a resource/budget breakdown for a Plan."""
+    """Carga útil para crear un desglose de recursos/presupuesto para un Plan."""
     recursos_necesarios: Optional[str] = None
     ate: Optional[str] = None
     tic: Optional[str] = None
@@ -348,27 +352,27 @@ class StrategicResourceCreate(BaseModel):
     monto_total: Optional[int] = 0
 
 class StrategicResource(StrategicResourceCreate):
-    """Public representation of a resource/budget breakdown."""
+    """Representación pública de un desglose de recursos/presupuesto."""
     id: int
     plan_id: int
 
 class StrategicPlan(StrategicPlanCreate):
-    """Public representation of a Strategic Plan (Action)."""
+    """Representación pública de un Plan Estratégico (Acción)."""
     id: int
     created_at: datetime
 
 class LoginRequest(BaseModel):
-    """Payload for the /auth/login endpoint."""
+    """Carga útil para el endpoint /auth/login."""
     rut: str
     password: str
 
 class TokenResponse(BaseModel):
-    """Response from a successful /auth/login."""
+    """Respuesta de un /auth/login exitoso."""
     access_token: str
     token_type: str = "bearer"
 
 class MeOut(BaseModel):
-    """Response for the /auth/me endpoint."""
+    """Respuesta para el endpoint /auth/me."""
     id: int
     rut: str
     name: str
@@ -377,7 +381,7 @@ class MeOut(BaseModel):
     is_active: bool
 
 class StrategicGoalIn(BaseModel):
-    """DEPRECATED? Payload for creating a 'strategic_goal'."""
+    """¿DEPRECATED? Carga útil para crear una 'meta_estrategica'."""
     dimension: str
     objetivo: str
     plan_id: int
@@ -386,14 +390,14 @@ class StrategicGoalIn(BaseModel):
     descripcion_indicador: str
 
 class StrategicGoalUpdate(BaseModel):
-    """DEPRECATED? Payload for updating a 'strategic_goal'."""
+    """¿DEPRECATED? Carga útil para actualizar una 'meta_estrategica'."""
     plan_id: int | None = None
     meta_estrategica: str | None = None
     estrategia_periodo: str | None = None
     descripcion_indicador: str | None = None
 
 class StrategicGoalOut(BaseModel):
-    """DEPRECATED? Public representation of a 'strategic_goal'."""
+    """¿DEPRECATED? Representación pública de una 'meta_estrategica'."""
     id: int
     dimension: str
     objetivo: str
@@ -409,11 +413,11 @@ class StatsTotals(BaseModel):
     actividades: int
     recursos: int
 # ----------------------------
-# ORM models (SQLAlchemy)
+# Modelos ORM (SQLAlchemy)
 # ----------------------------
 
 class ObjectiveModel(Base):
-    """DB model for Objectives."""
+    """Modelo DB para Objetivos."""
     __tablename__ = "objectives"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(300), nullable=False)
@@ -430,7 +434,7 @@ class ObjectiveModel(Base):
         cascade="all, delete-orphan")
 
 class GoalModel(Base):
-    """DB model for Goals (Metas)."""
+    """Modelo DB para Metas."""
     __tablename__ = "goals"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
@@ -444,7 +448,7 @@ class GoalModel(Base):
     )
 
 class IndicatorModel(Base):
-    """DB model for Indicators."""
+    """Modelo DB para Indicadores."""
     __tablename__ = "indicators"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
@@ -461,7 +465,7 @@ class IndicatorModel(Base):
     )
 
 class EvidenceModel(Base):
-    """DB model for Evidences (linked to Indicators OR Plans)."""
+    """Modelo DB para Evidencias (vinculadas a Indicadores O Planes)."""
     __tablename__ = "evidences"
     id = Column(Integer, primary_key=True, index=True)
     description = Column(Text, nullable=True)
@@ -474,7 +478,7 @@ class EvidenceModel(Base):
     plan = relationship("StrategicPlanModel", backref="evidences")
 
 class UserModel(Base):
-    """DB model for Users."""
+    """Modelo DB para Usuarios."""
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     rut = Column(String(12), unique=True, nullable=False, index=True)
@@ -486,7 +490,7 @@ class UserModel(Base):
     created_at = Column(DateTime, server_default=func.current_timestamp())
 
 class StrategicPlanModel(Base):
-    """DB model for Strategic Plans (Actions)."""
+    """Modelo DB para Planes Estratégicos (Acciones)."""
     __tablename__ = "strategic_plans"
     id = Column(Integer, primary_key=True, index=True)
     dimension = Column(String(40), nullable=False, index=True)
@@ -504,7 +508,7 @@ class StrategicPlanModel(Base):
     resources = relationship("StrategicResourceModel", back_populates="plan", cascade="all, delete-orphan")
 
 class StrategicResourceModel(Base):
-    """DB model for Plan Resources (Budgets)."""
+    """Modelo DB para Recursos del Plan (Presupuestos)."""
     __tablename__ = "plan_resources"
     id   = Column(Integer, primary_key=True, index=True)
     plan_id = Column(Integer, ForeignKey("strategic_plans.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -539,25 +543,25 @@ class StrategicGoal(Base):
     plan = relationship("StrategicPlanModel", backref="strategic_goals")
 
 # ----------------------------
-# ORM -> Pydantic converters
+# Conversores ORM -> Pydantic
 # ----------------------------
 
 def objective_to_pydantic(m: ObjectiveModel, avg_pct: Optional[float] = None) -> Objective:
-    """Map ObjectiveModel to API schema."""
+    """Mapea ObjectiveModel al esquema de API."""
     return Objective(id=m.id, name=m.name, description=m.description, start_year=m.start_year, end_year=m.end_year, dimension=m.dimension, average_progress_pct=avg_pct if avg_pct is not None else 0.0)
 
 def goal_to_pydantic(m: GoalModel) -> Goal:
-    """Map GoalModel to API schema."""
+    """Mapea GoalModel al esquema de API."""
     return Goal(id=m.id, objective_id=m.objective_id, title=m.title, description=m.description, year=m.year)
 
 def indicator_to_pydantic(m: IndicatorModel) -> Indicator:
-    """Map IndicatorModel to API schema."""
+    """Mapea IndicatorModel al esquema de API."""
     return Indicator(id=m.id, goal_id=m.goal_id, title=m.title, target=m.target, unit=m.unit, progress_total=m.progress_total,
         progress_obtained=m.progress_obtained,
         progress_free=m.progress_free)
 
 def evidence_to_pydantic(m: EvidenceModel) -> Evidence:
-    """Map EvidenceModel to API schema."""
+    """Mapea EvidenceModel al esquema de API."""
     return Evidence(
         id=m.id,
         indicator_id=m.indicator_id,
@@ -570,7 +574,7 @@ def evidence_to_pydantic(m: EvidenceModel) -> Evidence:
     )
 
 def plan_to_pydantic(m: StrategicPlanModel) -> StrategicPlan:
-    """Map StrategicPlanModel to API schema."""
+    """Mapea StrategicPlanModel al esquema de API."""
     return StrategicPlan(
         id=m.id,
         dimension=m.dimension,
@@ -588,7 +592,7 @@ def plan_to_pydantic(m: StrategicPlanModel) -> StrategicPlan:
     )
 
 def Resource_to_pydantic(m: StrategicResourceModel) -> StrategicResource:
-    """Map StrategicResourceModel to API schema."""
+    """Mapea StrategicResourceModel al esquema de API."""
     return StrategicResource(
         id=m.id,
         plan_id=m.plan_id,
@@ -611,7 +615,7 @@ def Resource_to_pydantic(m: StrategicResourceModel) -> StrategicResource:
     )
 
 def objective_get_by_dim_and_name(db: Session, dimension: str, name: str) -> Optional[ObjectiveModel]:
-    """Fetch an objective by its unique (dimension, name) composite key."""
+    """Obtiene un objetivo por su clave compuesta única (dimension, name)."""
     return (
         db.query(ObjectiveModel)
           .filter(
@@ -622,8 +626,8 @@ def objective_get_by_dim_and_name(db: Session, dimension: str, name: str) -> Opt
 
 def objective_create_or_get(db: Session, payload: ObjectiveCreate) -> ObjectiveModel:
     """
-    Idempotently create an Objective by (dimension, name).
-    If it already exists, return the existing one.
+    Crea un Objetivo de forma idempotente por (dimension, name).
+    Si ya existe, retorna el existente.
     """
     existing = objective_get_by_dim_and_name(db, payload.dimension, payload.name)
     if existing:
@@ -642,7 +646,7 @@ def objective_create_or_get(db: Session, payload: ObjectiveCreate) -> ObjectiveM
     return m
 
 # ----------------------------
-# Business routes (Objectives/Goals/Indicators/Evidences)
+# Rutas de Negocio (Objetivos/Metas/Indicadores/Evidencias)
 # ----------------------------
 
 @app.post("/objectives", response_model=Objective, status_code=201)
@@ -652,8 +656,8 @@ def create_objective(
     response: Response = None
 ):
     """
-    Create an Objective. Idempotent by (dimension, name).
-    Returns 201 if created, 200 if it already existed.
+    Crea un Objetivo. Idempotente por (dimension, name).
+    Retorna 201 si se crea, 200 si ya existía.
     """
     obj = objective_create_or_get(db, payload)
     if response is not None:
@@ -721,7 +725,7 @@ def list_objectives(
 
 @app.get("/objectives/{objective_id}", response_model=Objective)
 def get_objective(objective_id: int, db: Session = Depends(get_db)):
-    """Fetch a single objective by ID."""
+    """Obtiene un único objetivo por ID."""
     m = db.get(ObjectiveModel, objective_id)
     if not m:
         raise HTTPException(status_code=404, detail="Objective not found")
@@ -729,7 +733,7 @@ def get_objective(objective_id: int, db: Session = Depends(get_db)):
 
 @app.delete("/objectives/{objective_id}", status_code=204)
 def delete_objective(objective_id: int, db: Session = Depends(get_db)):
-    """Delete an objective. Fails (409) if it has child goals."""
+    """Elimina un objetivo. Falla (409) si tiene metas hijas."""
     m = db.get(ObjectiveModel, objective_id)
     if not m:
         raise HTTPException(status_code=404, detail="Objective not found")
@@ -739,12 +743,12 @@ def delete_objective(objective_id: int, db: Session = Depends(get_db)):
     db.delete(m)
     return Response(status_code=204)
 
-# --- Goals ---
+# --- Metas (Goals) ---
 @app.post("/objectives/{objective_id}/goals", response_model=Goal, status_code=201)
 def create_goal(objective_id: int, payload: GoalCreate, db: Session = Depends(get_db), response: Response = None, user: "UserModel" = Depends(require_role("editor"))):
     """
-    Create a goal under an objective. Idempotent by (objective_id, title, year).
-    Returns 201 if created, 200 if it already existed.
+    Crea una meta bajo un objetivo. Idempotente por (objective_id, title, year).
+    Retorna 201 si se crea, 200 si ya existía.
     """
     obj = db.get(ObjectiveModel, objective_id)
     if not obj:
@@ -752,7 +756,7 @@ def create_goal(objective_id: int, payload: GoalCreate, db: Session = Depends(ge
     if not (obj.start_year <= payload.year <= obj.end_year):
         raise HTTPException(status_code=400, detail="Goal year must be within the objective period")
 
-    # 1) Check if exists
+    # 1) Revisa si existe
     existing = (
         db.query(GoalModel)
           .filter(
@@ -767,7 +771,7 @@ def create_goal(objective_id: int, payload: GoalCreate, db: Session = Depends(ge
             response.status_code = 200
         return goal_to_pydantic(existing)
 
-    # 2) Create
+    # 2) Crea
     m = GoalModel(objective_id=objective_id, **asdict(payload))
     db.add(m)
     try:
@@ -793,14 +797,14 @@ def create_goal(objective_id: int, payload: GoalCreate, db: Session = Depends(ge
 
 @app.get("/objectives/{objective_id}/goals", response_model=List[Goal])
 def list_goals(objective_id: int, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
-    """List all goals for a specific objective."""
+    """Lista todas las metas para un objetivo específico."""
     stmt = select(GoalModel).where(GoalModel.objective_id == objective_id).order_by(GoalModel.id).offset(skip).limit(limit)
     goals = db.execute(stmt).scalars().all()
     return [goal_to_pydantic(g) for g in goals]
 
 @app.get("/goals/{goal_id}", response_model=Goal)
 def get_goal(goal_id: int, db: Session = Depends(get_db)):
-    """Retrieve a single goal by ID."""
+    """Obtiene una única meta por ID."""
     m = db.get(GoalModel, goal_id)
     if not m:
         raise HTTPException(status_code=404, detail="Goal not found")
@@ -808,7 +812,7 @@ def get_goal(goal_id: int, db: Session = Depends(get_db)):
 
 @app.delete("/goals/{goal_id}", status_code=204)
 def delete_goal(goal_id: int, db: Session = Depends(get_db), user: "UserModel" = Depends(require_role("editor"))):
-    """Delete a goal. Fails (409) if it has child indicators."""
+    """Elimina una meta. Falla (409) si tiene indicadores hijos."""
     m = db.get(GoalModel, goal_id)
     if not m:
         raise HTTPException(status_code=404, detail="Goal not found")
@@ -818,12 +822,12 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db), user: "UserModel" =
     db.delete(m)
     return Response(status_code=204)
 
-# --- Indicators ---
+# --- Indicadores (Indicators) ---
 @app.post("/goals/{goal_id}/indicators", response_model=Indicator, status_code=201)
 def create_indicator(goal_id: int, payload: IndicatorCreate, db: Session = Depends(get_db), response: Response = None, user: "UserModel" = Depends(require_role("editor"))):
     """
-    Create an indicator for a goal. Idempotent by (goal_id, title, unit).
-    Returns 201 if created, 200 if it already existed.
+    Crea un indicador para una meta. Idempotente por (goal_id, title, unit).
+    Retorna 201 si se crea, 200 si ya existía.
     """
     parent = db.get(GoalModel, goal_id)
     if not parent:
@@ -862,14 +866,14 @@ def create_indicator(goal_id: int, payload: IndicatorCreate, db: Session = Depen
 
 @app.get("/goals/{goal_id}/indicators", response_model=List[Indicator])
 def list_indicators(goal_id: int, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
-    """List all indicators under a goal."""
+    """Lista todos los indicadores bajo una meta."""
     stmt = select(IndicatorModel).where(IndicatorModel.goal_id == goal_id).order_by(IndicatorModel.id).offset(skip).limit(limit)
     inds = db.execute(stmt).scalars().all()
     return [indicator_to_pydantic(i) for i in inds]
 
 @app.get("/indicators/{indicator_id}", response_model=Indicator)
 def get_indicator(indicator_id: int, db: Session = Depends(get_db)):
-    """Fetch a single indicator by ID."""
+    """Obtiene un único indicador por ID."""
     m = db.get(IndicatorModel, indicator_id)
     if not m:
         raise HTTPException(status_code=404, detail="Indicator not found")
@@ -877,7 +881,7 @@ def get_indicator(indicator_id: int, db: Session = Depends(get_db)):
 
 @app.delete("/indicators/{indicator_id}", status_code=204)
 def delete_indicator(indicator_id: int, db: Session = Depends(get_db), user: "UserModel" = Depends(require_role("editor"))):
-    """Delete an indicator. Fails (409) if it has child evidences."""
+    """Elimina un indicador. Falla (409) si tiene evidencias hijas."""
     m = db.get(IndicatorModel, indicator_id)
     if not m:
         raise HTTPException(status_code=404, detail="Indicator not found")
@@ -894,7 +898,7 @@ async def update_indicator_progress(
     db: Session = Depends(get_db), user : "UserModel" = Depends(require_role("editor" , "progress_editor"))
 ):
     """
-    Update an indicator's progress (total, obtained, or free text).
+    Actualiza el progreso de un indicador (total, obtenido o texto libre).
     """
     indicator = db.get(IndicatorModel, indicator_id)
     if not indicator:
@@ -912,10 +916,10 @@ async def update_indicator_progress(
 
     return Response(status_code=204)
 
-# --- Evidences (Indicator-linked) ---
+# --- Evidencias (vinculadas a Indicadores) ---
 @app.post("/indicators/{indicator_id}/evidences", response_model=Evidence, status_code=201)
 def upload_evidence(indicator_id: int, file: UploadFile = File(...), description: str = Form(""), db: Session = Depends(get_db), user: "UserModel" = Depends(require_role("editor"))):
-    """Upload an evidence file and link it to an Indicator."""
+    """Sube un archivo de evidencia y lo vincula a un Indicador."""
     ind = db.get(IndicatorModel, indicator_id)
     if not ind:
         raise HTTPException(status_code=404, detail="Indicator not found")
@@ -939,7 +943,7 @@ def upload_evidence(indicator_id: int, file: UploadFile = File(...), description
         print(f"Error al subir a Cloudinary: {e}")
         raise HTTPException(status_code=500, detail="Error al guardar el archivo en la nube.")
     
-    # Create DB record
+    # Crea el registro en DB
     m = EvidenceModel(
         indicator_id=indicator_id,
         description=description,
@@ -953,7 +957,7 @@ def upload_evidence(indicator_id: int, file: UploadFile = File(...), description
 
 @app.get("/indicators/{indicator_id}/evidences", response_model=List[Evidence])
 def list_evidences(indicator_id: int, skip: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)):
-    """List evidences for a specific indicator."""
+    """Lista las evidencias para un indicador específico."""
     if not db.get(IndicatorModel, indicator_id):
         raise HTTPException(status_code=404, detail="Indicator not found")
     stmt = select(EvidenceModel).where(EvidenceModel.indicator_id == indicator_id).order_by(EvidenceModel.id).offset(skip).limit(limit)
@@ -962,7 +966,7 @@ def list_evidences(indicator_id: int, skip: int = Query(0, ge=0), limit: int = Q
 
 @app.get("/evidences/{evidence_id}", response_model=Evidence)
 def get_evidence(evidence_id: int, db: Session = Depends(get_db)):
-    """Fetch a single (indicator-linked) evidence record."""
+    """Obtiene un único registro de evidencia (vinculado a un indicador)."""
     m = db.get(EvidenceModel, evidence_id)
     if not m:
         raise HTTPException(status_code=404, detail="Evidence not found")
@@ -971,47 +975,26 @@ def get_evidence(evidence_id: int, db: Session = Depends(get_db)):
 
 
 # ----------------------------
-# Auth API
+# API de Autenticación (Auth)
 # ----------------------------
 
 @app.post("/auth/login", response_model=TokenResponse)
-def login(
-    rut: str = Form(None),
-    password: str = Form(None),
-    payload: Optional[LoginRequest] = None,
-    db: Session = Depends(get_db)
-):
-    """
-    Authenticate by RUT + password.
-    Accepts either form fields (rut,password) or JSON body matching LoginRequest.
-    """
-    # prefer form fields if provided (frontend sends form-urlencoded)
-    if rut is None or password is None:
-        # try JSON body
-        if payload is None:
-            raise HTTPException(status_code=422, detail="rut and password are required")
-        rut = payload.rut
-        password = payload.password
-
-    # normalize and validate rut (normalize_rut raises HTTPException on invalid)
-    try:
-        rut_norm = normalize_rut(rut)
-    except HTTPException:
-        raise HTTPException(status_code=401, detail="Credenciales inválidas")
-
+def login(payload: LoginRequest, db: Session = Depends(get_db)):
+    """Autentica por RUT + contraseña; retorna un JWT firmado si es válido."""
+    rut_norm = normalize_rut(payload.rut)
     user = db.execute(select(UserModel).where(UserModel.rut == rut_norm)).scalar_one_or_none()
-    if not user or not verify_password(password, user.password):
+    if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
     token = create_access_token({"sub": user.rut, "uid": user.id, "role": user.role})
     return TokenResponse(access_token=token)
 
 @app.get("/auth/me", response_model=MeOut)
 def me(u: "UserModel" = Depends(get_current_user)):
-    """Return the authenticated user's profile."""
+    """Retorna el perfil del usuario autenticado."""
     return MeOut(id=u.id, rut=u.rut, name=u.name, email=u.email, role=u.role, is_active=u.is_active)
 
 # ----------------------------
-# Strategic Plans API (plans + resources + strategic goals)
+# API de Planes Estratégicos (plans + resources + strategic goals)
 # ----------------------------
 
 @app.post("/plans", response_model=StrategicPlan, status_code=201)
@@ -1020,7 +1003,7 @@ def create_plan(
     db: Session = Depends(get_db),
     current_user: "UserModel" = Depends(require_role("editor")),
 ):
-    """Create a StrategicPlan row (Action). Editor role required."""
+    """Crea una fila de StrategicPlan (Acción). Se requiere el rol de Editor."""
     m = StrategicPlanModel(
         dimension=payload.dimension.value,
         colegio=payload.colegio,
@@ -1046,7 +1029,7 @@ def list_plans(
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """List plans with optional dimension/college filters."""
+    """Lista planes con filtros opcionales por dimension/colegio."""
     stmt = select(StrategicPlanModel).order_by(StrategicPlanModel.id)
     if dimension:
         stmt = stmt.where(StrategicPlanModel.dimension == dimension.value)
@@ -1057,12 +1040,12 @@ def list_plans(
 
 @app.get("/plans/dimensions", response_model=List[str])
 def list_dimensions():
-    """Return the static list of valid dimensions (Enum values)."""
+    """Retorna la lista estática de dimensiones válidas (valores de Enum)."""
     return [d.value for d in DimensionEnum]
 
 @app.get("/plans/{plan_id}", response_model=StrategicPlan)
 def get_plan(plan_id: int, db: Session = Depends(get_db)):
-    """Retrieve a single plan by ID."""
+    """Obtiene un único plan por ID."""
     m = db.get(StrategicPlanModel, plan_id)
     if not m:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
@@ -1074,7 +1057,7 @@ def delete_plan(
     db: Session = Depends(get_db),
     current_user: "UserModel" = Depends(require_role("editor")),
 ):
-    """Delete a plan. Editor role required."""
+    """Elimina un plan. Se requiere el rol de Editor."""
     m = db.get(StrategicPlanModel, plan_id)
     if not m:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
@@ -1088,12 +1071,12 @@ def create_resource(
     db: Session = Depends(get_db),
     current_user: "UserModel" = Depends(require_role("editor")),
 ):
-    """Create resource/budget row for a plan. Auto-calculates total if missing."""
+    """Crea una fila de recursos/presupuesto para un plan. Calcula automáticamente el total si falta."""
     plan = db.get(StrategicPlanModel, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
 
-    # Auto-calculate total if not provided
+    # Calcula automáticamente el total si no se proporciona
     if not payload.monto_total:
         nums = [
             payload.monto_subvencion_general or 0,
@@ -1116,7 +1099,7 @@ def create_resource(
 
 @app.get("/plans/{plan_id}/resources", response_model=List[StrategicResource])
 def list_resources(plan_id: int, db: Session = Depends(get_db)):
-    """List all resources for a given plan."""
+    """Lista todos los recursos para un plan dado."""
     if not db.get(StrategicPlanModel, plan_id):
         raise HTTPException(status_code=404, detail="Plan no encontrado")
     rows = db.execute(
@@ -1130,7 +1113,7 @@ def delete_resource(
     db: Session = Depends(get_db),
     current_user: "UserModel" = Depends(require_role("editor")),
 ):
-    """Delete a single resource row. Editor role required."""
+    """Elimina una sola fila de recurso. Se requiere el rol de Editor."""
     m = db.get(StrategicResourceModel, resource_id)
     if not m:
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
@@ -1144,7 +1127,7 @@ def list_strategic_goals(
     db: Session = Depends(get_db),
     user = Depends(get_current_user),
 ):
-    """DEPRECATED? Query all strategic goals matching a (dimension, objetivo) pair."""
+    """¿DEPRECATED? Consulta todos los objetivos estratégicos que coinciden con un par (dimension, objetivo)."""
     q = db.query(StrategicGoal).filter(
         StrategicGoal.dimension == dimension,
         StrategicGoal.objetivo == objetivo
@@ -1157,7 +1140,7 @@ def create_strategic_goal(
     db: Session = Depends(get_db),
     user = Depends(require_role("editor"))
 ):
-    """DEPRECATED? Create a strategic goal record. Editor role required."""
+    """¿DEPRECATED? Crea un registro de objetivo estratégico. Se requiere el rol de Editor."""
     plan = db.query(StrategicPlanModel).get(payload.plan_id)
     if not plan:
         raise HTTPException(404, "Plan no existe")
@@ -1179,7 +1162,7 @@ def update_strategic_goal(
     db: Session = Depends(get_db),
     user = Depends(require_role("editor"))
 ):
-    """DEPRECATED? Partial update for strategic goals. Editor role required."""
+    """¿DEPRECATED? Actualización parcial para objetivos estratégicos. Se requiere el rol de Editor."""
     rec = db.query(StrategicGoal).get(sid)
     if not rec:
         raise HTTPException(404, "No encontrado")
@@ -1199,13 +1182,13 @@ def delete_strategic_goal(
     db: Session = Depends(get_db),
     user = Depends(require_role("editor"))
 ):
-    """DEPRECATED? Delete a strategic goal. Editor role required."""
+    """¿DEPRECATED? Elimina un objetivo estratégico. Se requiere el rol de Editor."""
     rec = db.query(StrategicGoal).get(sid)
     if not rec: raise HTTPException(404, "No encontrado")
     db.delete(rec); db.commit()
     return {"ok": True}
 
-# --- Evidences (Plan-linked) ---
+# --- Evidencias (vinculadas a Planes) ---
 @app.post("/plans/{plan_id}/evidences", response_model=Evidence, status_code=201)
 def upload_plan_evidence(plan_id: int, file: UploadFile = File(...), description: str = Form(""), db: Session = Depends(get_db), user: "UserModel" = Depends(require_role("editor"))):
     plan = db.get(StrategicPlanModel, plan_id)
@@ -1249,7 +1232,7 @@ def list_plan_evidences(plan_id: int, skip: int = Query(0, ge=0), limit: int = Q
 
 @app.delete("/evidences/{evidence_id}", status_code=204)
 def delete_evidence(evidence_id: int, db: Session = Depends(get_db), user: "UserModel" = Depends(require_role("editor"))):
-    """Delete an evidence row and remove the physical file if present."""
+    """Elimina una fila de evidencia y el archivo físico si está presente."""
     m = db.get(EvidenceModel, evidence_id)
     if not m:
         raise HTTPException(status_code=404, detail="Evidence not found")
@@ -1270,10 +1253,16 @@ def delete_evidence(evidence_id: int, db: Session = Depends(get_db), user: "User
 
 @app.get("/uploads/{filename}")
 def download_upload(filename: str, db: Session = Depends(get_db)):
-    # intentar recuperar original_filename desde la BD para usar en Content-Disposition
+ 
+
+    # 1. Obtener datos de la evidencia
     ev = db.query(EvidenceModel).filter(EvidenceModel.filename == filename).first()
+    if not ev:
+        raise HTTPException(status_code=404, detail="Registro de archivo no encontrado")
+    
     download_name = ev.original_filename if ev and ev.original_filename else filename
 
+    # 2. Generar URL de Cloudinary
     public_id_base = Path(filename).stem
     public_id_completo = f"evidencias/{public_id_base}"
     res_type = get_cloudinary_resource_type(filename)
@@ -1288,6 +1277,7 @@ def download_upload(filename: str, db: Session = Depends(get_db)):
         print(f"Error al generar URL de Cloudinary: {e}")
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
 
+    # 3. Descargar el archivo a través de proxy y transmitirlo
     try:
         r = requests.get(url, stream=True, timeout=30)
         r.raise_for_status()
@@ -1296,10 +1286,18 @@ def download_upload(filename: str, db: Session = Depends(get_db)):
         r.raw.decode_content = True
 
         content_type = r.headers.get("Content-Type", "application/octet-stream")
+        
+        # --- INICIO DE LA CORRECCIÓN ---
+        # Codifica el nombre de archivo para compatibilidad con UTF-8 (RFC 6266)
+        encoded_download_name = requests.utils.quote(download_name)
+        
         headers = {
-            "Content-Disposition": f'attachment; filename="{download_name}"',
+            # Uso de filename* (UTF-8) para soporte robusto de caracteres
+            "Content-Disposition": f'attachment; filename="{download_name}"; filename*=UTF-8\'\'{encoded_download_name}',
             "Cache-Control": "no-cache"
         }
+        # --- FIN DE LA CORRECCIÓN ---
+        
         # pasar Content-Length si está disponible
         if "Content-Length" in r.headers:
             headers["Content-Length"] = r.headers["Content-Length"]
@@ -1308,7 +1306,9 @@ def download_upload(filename: str, db: Session = Depends(get_db)):
         return StreamingResponse(r.raw, media_type=content_type, headers=headers)
     except Exception as e:
         print(f"Error proxy download from Cloudinary: {e}")
-        raise HTTPException(status_code=404, detail="No se pudo obtener el archivo")
+        raise HTTPException(status_code=500, detail="Error en la descarga del archivo")
+
+
 @app.get("/objectives/{objective_id}/evidences", response_model=list[ObjectiveEvidenceOut])
 def list_evidences_by_objective(objective_id: int, db: Session = Depends(get_db)):
     stmt = (
